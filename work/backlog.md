@@ -11,16 +11,16 @@ Implementation note: **MCP** = can be done with an existing Atlassian Jira/Confl
 
 ## Phase 1 — Setup
 
-- [ ] [P1][M] Create repo layout per spec §9: `wsr/` package, `tests/`, `config.yaml`, `overrides.yaml`, `.env.example`, `requirements.txt`, `README.md` — **custom skill**
-- [ ] [P1][M] Add `pyproject.toml` with `wsr` console entry point (`wsr = wsr.cli:main`), Python 3.10+ (NFR-5) — **custom skill**
-- [ ] [P1][M] Pin dependencies: `requests`, `python-pptx`, `PyYAML`, `python-dotenv`, `pytest` — **custom skill**
-- [ ] [P1][M] Add `.gitignore` for `.env`, `snapshots/`, `output/` (NFR-1) — **custom skill**
-- [ ] [P1][M] Implement `config.py`: load `config.yaml`, merge env vars/`.env`, validate required keys, apply defaults (§7) — **custom skill**
-- [ ] [P1][M] Define dataclasses in `models.py`: `Issue`, `Epic`, `Blocker`, `EpicMetrics`, `Snapshot` — **custom skill**
-- [ ] [P1][S] Set up logging with `--verbose` support and a secret-redaction filter (NFR-1, NFR-7) — **custom skill**
-- [ ] [P1][S] Set up CI (lint + pytest) on Windows/Linux/macOS (NFR-5) — **custom skill**
-- [ ] [P1][M] Create fixture directory with recorded Jira responses (search, changelog, comments in ADF) and a synthetic project dataset — **MCP** (capture real responses) + **custom skill** (synthetic data)
-- [ ] [P1][C] Add pre-commit hooks (ruff/black) — **custom skill**
+- [ ] [P1][M] Create repo layout per spec §9: `wsr/` package, `tests/`, `config.yaml`, `overrides.yaml`, `.env.example`, `requirements.txt`, `README.md` — **custom skill** — [#1](https://github.com/vimalans1129/jira-confluence-automation/issues/1)
+- [ ] [P1][M] Add `pyproject.toml` with `wsr` console entry point (`wsr = wsr.cli:main`), Python 3.10+ (NFR-5) — **custom skill** — [#2](https://github.com/vimalans1129/jira-confluence-automation/issues/2)
+- [ ] [P1][M] Pin dependencies: `requests`, `python-pptx`, `PyYAML`, `python-dotenv`, `pytest` — **custom skill** — [#3](https://github.com/vimalans1129/jira-confluence-automation/issues/3)
+- [ ] [P1][M] Add `.gitignore` for `.env`, `snapshots/`, `output/` (NFR-1) — **custom skill** — [#4](https://github.com/vimalans1129/jira-confluence-automation/issues/4)
+- [ ] [P1][M] Implement `config.py`: load `config.yaml`, merge env vars/`.env`, validate required keys, apply defaults (§7) — **custom skill** — [#5](https://github.com/vimalans1129/jira-confluence-automation/issues/5)
+- [ ] [P1][M] Define dataclasses in `models.py`: `Issue`, `Epic`, `Blocker`, `EpicMetrics`, `Snapshot` — **custom skill** — [#13](https://github.com/vimalans1129/jira-confluence-automation/issues/13)
+- [ ] [P1][S] Set up logging with `--verbose` support and a secret-redaction filter (NFR-1, NFR-7) — **custom skill** — [#7](https://github.com/vimalans1129/jira-confluence-automation/issues/7)
+- [ ] [P1][S] Set up CI (lint + pytest) on Windows/Linux/macOS (NFR-5) — **custom skill** — [#9](https://github.com/vimalans1129/jira-confluence-automation/issues/9)
+- [ ] [P1][M] Create fixture directory with recorded Jira responses (search, changelog, comments in ADF) and a synthetic project dataset — **MCP** (capture real responses) + **custom skill** (synthetic data) — [#10](https://github.com/vimalans1129/jira-confluence-automation/issues/10)
+- [ ] [P1][C] Add pre-commit hooks (ruff/black) — **custom skill** — [#12](https://github.com/vimalans1129/jira-confluence-automation/issues/12)
 
 ## Phase 2 — Core Features
 

@@ -1,0 +1,5 @@
+{
+    "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+    "chat.mcp.access": "all",
+    "chat.agent.maxRequests": 250
+}

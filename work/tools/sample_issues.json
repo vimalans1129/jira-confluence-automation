@@ -1,0 +1,11 @@
+[
+{"key":"E-1","summary":"Schema migration","type":"Epic","status":"In Progress","status_category":"In Progress","due":"2026-10-20"},
+{"key":"E-2","summary":"Pipeline migration","type":"Epic","status":"To Do","status_category":"To Do","due":"2026-11-30"},
+{"key":"A-1","summary":"Migrate customer tables","type":"Story","status":"Done","status_category":"Done","epic_key":"E-1","story_points":5,"done_at":"2026-10-07T10:00:00Z"},
+{"key":"A-2","summary":"Migrate orders tables","type":"Story","status":"Blocked","status_category":"In Progress","epic_key":"E-1","story_points":3,"blocked_since":"2026-10-01T00:00:00Z","due":"2026-10-05"},
+{"key":"A-3","summary":"Validate row counts","type":"Task","status":"To Do","status_category":"To Do","epic_key":"E-1","story_points":2,"due":"2026-10-14"},
+{"key":"B-1","summary":"Port ETL job","type":"Story","status":"In Progress","status_category":"In Progress","epic_key":"E-2","story_points":8,"in_active_sprint":true,"flagged":true,"updated":"2026-10-06T00:00:00Z"},
+{"key":"B-2","summary":"Rounding bug","type":"Bug","status":"To Do","status_category":"To Do","epic_key":"E-2","story_points":1,"created":"2026-10-08T00:00:00Z"},
+{"key":"B-3","summary":"Old bug fixed","type":"Bug","status":"Done","status_category":"Done","epic_key":"E-2","story_points":1,"created":"2026-09-20T00:00:00Z","done_at":"2026-10-08T09:00:00Z"},
+{"key":"C-1","summary":"Misc cleanup","type":"Task","status":"To Do","status_category":"To Do","story_points":1}
+]

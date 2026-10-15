@@ -34,6 +34,11 @@ Each entry below is an instruction file with a one-line description. Optional su
   + Target: `tools/calculate_metrics.py`
   + Exceptions: no RAG, snapshots/deltas, or Jira fetching; input is a JSON issue export.
 
+- [`./Instructions/validate-instructions.agent.md`](./validate-instructions.agent.md) — Validate all Markdown files in the project for consistent formatting (headings, lists, code fences, tables, links, whitespace, required sections) and report violations.
+  + Keywords: validate markdown, markdown lint, check formatting, md formatting, consistent formatting, validate docs
+  + Target: `**/*.md`
+  + Exceptions: formatting only, not content accuracy; report first, fix only after user confirms; `*.agent.md` files are exempt from heading rules.
+
 ## Conventions
 
 - Naming: `[action-verb]-[subject].agent.md`.

@@ -4,7 +4,8 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY tsconfig.json vite.config.ts index.html ./
 COPY src ./src
-RUN npm run build
+# Type checking runs in CI; the report contract types come from ../backend and are erased by Vite.
+RUN npx vite build
 
 FROM nginxinc/nginx-unprivileged:1.27-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf

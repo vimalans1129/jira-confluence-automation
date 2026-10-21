@@ -11,6 +11,10 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
+    "paths": {
+      "@contract": ["../backend/src/contract/index.ts"],
+      "@contract/*": ["../backend/src/contract/*"]
+    },
     "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"]
   },
   "include": ["src", "tests", "*.ts"]

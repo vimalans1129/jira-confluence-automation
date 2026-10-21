@@ -1,0 +1,176 @@
+{
+  "startAt": 0,
+  "maxResults": 100,
+  "total": 12,
+  "isLast": true,
+  "values": [
+    {
+      "id": "1",
+      "created": "2026-07-30T11:25:10.175+0000",
+      "items": [
+        {
+          "field": "status",
+          "fieldId": "status",
+          "from": "10000",
+          "to": "10001",
+          "fromString": "To Do",
+          "toString": "In Progress"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "created": "2026-08-06T04:07:36.786+0000",
+      "items": [
+        {
+          "field": "Story Points",
+          "fieldId": "customfield_10016",
+          "from": "3",
+          "to": "2",
+          "fromString": "3",
+          "toString": "2"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "created": "2026-08-10T08:12:21.111+0000",
+      "items": [
+        {
+          "field": "Story Points",
+          "fieldId": "customfield_10016",
+          "from": "2",
+          "to": "5",
+          "fromString": "2",
+          "toString": "5"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "created": "2026-08-14T18:34:08.730+0000",
+      "items": [
+        {
+          "field": "status",
+          "fieldId": "status",
+          "from": "10001",
+          "to": "10003",
+          "fromString": "In Progress",
+          "toString": "Done"
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "created": "2026-08-19T19:35:45.497+0000",
+      "items": [
+        {
+          "field": "status",
+          "fieldId": "status",
+          "from": "10003",
+          "to": "10001",
+          "fromString": "Done",
+          "toString": "In Progress"
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "created": "2026-08-24T21:05:35.574+0000",
+      "items": [
+        {
+          "field": "Story Points",
+          "fieldId": "customfield_10016",
+          "from": "5",
+          "to": "2",
+          "fromString": "5",
+          "toString": "2"
+        }
+      ]
+    },
+    {
+      "id": "7",
+      "created": "2026-09-02T15:18:10.858+0000",
+      "items": [
+        {
+          "field": "status",
+          "fieldId": "status",
+          "from": "10001",
+          "to": "10002",
+          "fromString": "In Progress",
+          "toString": "Blocked"
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "created": "2026-09-06T17:30:24.275+0000",
+      "items": [
+        {
+          "field": "status",
+          "fieldId": "status",
+          "from": "10002",
+          "to": "10001",
+          "fromString": "Blocked",
+          "toString": "In Progress"
+        }
+      ]
+    },
+    {
+      "id": "9",
+      "created": "2026-09-11T18:10:59.878+0000",
+      "items": [
+        {
+          "field": "Flagged",
+          "fieldId": "customfield_10021",
+          "from": null,
+          "to": "10019",
+          "fromString": "",
+          "toString": "Impediment"
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "created": "2026-09-19T18:42:33.018+0000",
+      "items": [
+        {
+          "field": "status",
+          "fieldId": "status",
+          "from": "10001",
+          "to": "10002",
+          "fromString": "In Progress",
+          "toString": "Blocked"
+        }
+      ]
+    },
+    {
+      "id": "11",
+      "created": "2026-09-28T18:17:00.795+0000",
+      "items": [
+        {
+          "field": "status",
+          "fieldId": "status",
+          "from": "10002",
+          "to": "10001",
+          "fromString": "Blocked",
+          "toString": "In Progress"
+        }
+      ]
+    },
+    {
+      "id": "12",
+      "created": "2026-10-05T21:24:41.246+0000",
+      "items": [
+        {
+          "field": "Story Points",
+          "fieldId": "customfield_10016",
+          "from": "2",
+          "to": "13",
+          "fromString": "2",
+          "toString": "13"
+        }
+      ]
+    }
+  ]
+}

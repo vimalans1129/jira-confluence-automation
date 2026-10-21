@@ -1,0 +1,34 @@
+[
+  {
+    "id": "customfield_10016",
+    "name": "Story Points",
+    "custom": true,
+    "schema": {
+      "type": "number"
+    }
+  },
+  {
+    "id": "customfield_10021",
+    "name": "Flagged",
+    "custom": true,
+    "schema": {
+      "type": "array"
+    }
+  },
+  {
+    "id": "customfield_10015",
+    "name": "Start date",
+    "custom": true,
+    "schema": {
+      "type": "date"
+    }
+  },
+  {
+    "id": "summary",
+    "name": "Summary",
+    "custom": false,
+    "schema": {
+      "type": "string"
+    }
+  }
+]

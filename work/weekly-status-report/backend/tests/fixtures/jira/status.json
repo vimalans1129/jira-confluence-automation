@@ -1,0 +1,34 @@
+[
+  {
+    "id": "10000",
+    "name": "To Do",
+    "statusCategory": {
+      "id": 2,
+      "name": "To Do"
+    }
+  },
+  {
+    "id": "10001",
+    "name": "In Progress",
+    "statusCategory": {
+      "id": 4,
+      "name": "In Progress"
+    }
+  },
+  {
+    "id": "10002",
+    "name": "Blocked",
+    "statusCategory": {
+      "id": 4,
+      "name": "In Progress"
+    }
+  },
+  {
+    "id": "10003",
+    "name": "Done",
+    "statusCategory": {
+      "id": 3,
+      "name": "Done"
+    }
+  }
+]

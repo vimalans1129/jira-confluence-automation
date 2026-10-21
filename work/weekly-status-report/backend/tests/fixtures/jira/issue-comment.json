@@ -1,0 +1,26 @@
+{
+  "startAt": 0,
+  "maxResults": 1,
+  "total": 1,
+  "comments": [
+    {
+      "id": "1",
+      "created": "2026-10-05T21:24:41.246+0000",
+      "body": {
+        "type": "doc",
+        "version": 1,
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Waiting on [~accountid:abc0] for a vendor fix. Contact jane0@example.com."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -7,11 +7,14 @@ import { requestLogger } from "./middleware/requestLogger.js";
 import type { Logger } from "./logger.js";
 import { loginRouter, sessionRouter } from "./routes/auth.js";
 import { healthRouter, type DatabaseCheck } from "./routes/health.js";
+import { settingsRouter } from "./routes/settings.js";
+import type { SettingsRepository } from "./repositories/settingsRepository.js";
 
 export interface AppDependencies {
   logger: Logger;
   checkDatabase: DatabaseCheck;
   auth: AuthConfig;
+  settings?: SettingsRepository;
 }
 
 export function createApp(deps: AppDependencies): Express {
@@ -33,6 +36,7 @@ export function createApp(deps: AppDependencies): Express {
   api.use(requireAuth(deps.auth));
   api.use(csrfProtection(deps.auth));
   api.use("/auth", sessionRouter(deps.auth));
+  if (deps.settings) api.use(settingsRouter(deps.settings));
 
   app.use("/api/v1", api);
 

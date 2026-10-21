@@ -3,6 +3,11 @@ import { existedAt, isFlaggedAt, sortedTransitions, stateAt, type DomainIssue } 
 
 const DAY_MS = 86_400_000;
 
+export function matchesBlockedStatus(status: string, blockedStatuses: readonly string[]): boolean {
+  const wanted = status.trim().toLowerCase();
+  return blockedStatuses.some((s) => s.trim().toLowerCase() === wanted);
+}
+
 export interface BlockerOptions {
   asOf: Date;
   blockedStatuses: readonly string[];

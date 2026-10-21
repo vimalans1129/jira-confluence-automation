@@ -1,8 +1,10 @@
-# Jira/Confluence Automation Constitution
+# Jira Reporting Automation Constitution
 
 ## Purpose
 
-This constitution defines the non-negotiable principles for the Jira/Confluence automation project. Every specification, plan, task list, and implementation must comply with it. Amendments follow the governance rules at the end of this document.
+This constitution defines the non-negotiable principles for the Jira reporting automation project. Every specification, plan, task list, and implementation must comply with it. Amendments follow the governance rules at the end of this document.
+
+**Scope**: The current scope is Jira only (read access). Confluence integration is out of scope for now; rules that mention Confluence or Atlassian writes apply only if and when a specification adds that capability.
 
 ## Technology Stack
 
@@ -23,11 +25,11 @@ This constitution defines the non-negotiable principles for the Jira/Confluence 
 
 ### 2. Security First
 
-- Jira and Confluence credentials (API tokens, OAuth secrets) are read from environment variables only; they are never committed, logged, or returned to the browser.
-- The frontend never calls Atlassian APIs directly; all Jira and Confluence access goes through the backend.
+- Jira credentials (API tokens, OAuth secrets), and Confluence credentials if that integration is added, are read from environment variables only; they are never committed, logged, or returned to the browser.
+- The frontend never calls Atlassian APIs directly; all Jira access (and Confluence access, if added) goes through the backend.
 - All external input (request bodies, query strings, webhook payloads, Atlassian responses) is validated with a schema before use.
 - Database access uses parameterized queries only; string-built SQL is forbidden.
-- Atlassian content (issue text, Confluence pages, ADF) is treated as untrusted and sanitized before rendering or storage.
+- Atlassian content (issue text, ADF, and Confluence pages if added) is treated as untrusted and sanitized before rendering or storage.
 - Dependencies are kept current, and known high-severity vulnerabilities block a merge.
 - Each integration requests the minimum Atlassian scopes and permissions it needs.
 
@@ -35,7 +37,7 @@ This constitution defines the non-negotiable principles for the Jira/Confluence 
 
 - Clients handle pagination, rate limits (HTTP 429 with `Retry-After`), and transient failures with bounded retries and backoff.
 - Write operations are idempotent or guarded so a retry never duplicates issues, comments, or pages.
-- Automated writes to Jira or Confluence support a dry-run mode and are recorded in an audit log.
+- If automated writes to Jira or Confluence are ever added, they support a dry-run mode and are recorded in an audit log. Until then the application is read-only toward Atlassian, and changes to application settings and overrides are audited instead.
 - API endpoint specifics live in dedicated client modules, not in route handlers or UI components.
 
 ### 4. Test-Driven Quality
@@ -43,7 +45,7 @@ This constitution defines the non-negotiable principles for the Jira/Confluence 
 - New behavior has automated tests written before or alongside the implementation.
 - Backend: unit tests for services, integration tests for routes against a real PostgreSQL 15 container.
 - Frontend: component tests for logic-bearing components and at least one end-to-end test per primary user flow.
-- Atlassian calls are mocked in tests; no test depends on a live Jira or Confluence instance.
+- Atlassian calls are mocked in tests; no test depends on a live Jira instance (or Confluence instance, if added).
 - Linting, type checking, and tests must pass in CI before merge.
 
 ### 5. Simplicity
@@ -100,4 +102,4 @@ This constitution defines the non-negotiable principles for the Jira/Confluence 
 - Amendments require a written rationale, a version bump, and an update to any affected specifications or plans.
 - Plans and reviews must verify compliance; any justified deviation is documented in the plan under a complexity or exceptions note.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-21 | **Last Amended**: 2026-10-21
+**Version**: 1.1.0 | **Ratified**: 2026-10-21 | **Last Amended**: 2026-10-21

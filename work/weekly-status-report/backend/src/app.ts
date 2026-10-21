@@ -8,6 +8,7 @@ import type { Logger } from "./logger.js";
 import { loginRouter, sessionRouter } from "./routes/auth.js";
 import { healthRouter, type DatabaseCheck } from "./routes/health.js";
 import { settingsRouter } from "./routes/settings.js";
+import { reportsRouter, type ReportRouteDeps } from "./routes/reports.js";
 import { validateRouter, type ValidateRouteDeps } from "./routes/validate.js";
 import type { SettingsRepository } from "./repositories/settingsRepository.js";
 
@@ -17,6 +18,7 @@ export interface AppDependencies {
   auth: AuthConfig;
   settings?: SettingsRepository;
   validate?: ValidateRouteDeps;
+  reports?: ReportRouteDeps;
 }
 
 export function createApp(deps: AppDependencies): Express {
@@ -40,6 +42,7 @@ export function createApp(deps: AppDependencies): Express {
   api.use("/auth", sessionRouter(deps.auth));
   if (deps.settings) api.use(settingsRouter(deps.settings));
   if (deps.validate) api.use(validateRouter(deps.validate));
+  if (deps.reports) api.use(reportsRouter(deps.reports));
 
   app.use("/api/v1", api);
 

@@ -7,10 +7,21 @@ import {
 } from "../config/settings.js";
 import { DEFAULT_SETTINGS } from "../config/settingsDefaults.js";
 
+export interface ValidationRecord {
+  at: Date;
+  projectKey: string;
+  boardId: number;
+}
+
 export interface SettingsRepository {
   load(): Promise<Settings>;
   update(patch: unknown): Promise<Settings>;
+  getValidation(): Promise<ValidationRecord | null>;
+  recordValidation(record: ValidationRecord): Promise<void>;
 }
+
+const VALIDATION_KEY = "validation_passed_at";
+const FIELD_ID_KEYS = ["storyPointsFieldId", "flaggedFieldId", "epicStartDateFieldId"];
 
 // The denylist holds personal names, so audit entries record only its size (FR-047).
 function auditValue(key: string, value: unknown): unknown {
@@ -62,6 +73,10 @@ export function createSettingsRepository(pool: pg.Pool): SettingsRepository {
             [key, JSON.stringify(auditValue(key, old)), JSON.stringify(auditValue(key, value))],
           );
         }
+        // A changed field ID invalidates the last successful validation (FR-052).
+        if (changes.some(([key]) => FIELD_ID_KEYS.includes(key))) {
+          await client.query("DELETE FROM setting WHERE key = $1", [VALIDATION_KEY]);
+        }
         await client.query("COMMIT");
         return after;
       } catch (err) {
@@ -70,6 +85,22 @@ export function createSettingsRepository(pool: pg.Pool): SettingsRepository {
       } finally {
         client.release();
       }
+    },
+
+    async getValidation() {
+      const { rows } = await pool.query<{
+        value: { at: string; projectKey: string; boardId: number };
+      }>("SELECT value FROM setting WHERE key = $1", [VALIDATION_KEY]);
+      const value = rows[0]?.value;
+      return value ? { ...value, at: new Date(value.at) } : null;
+    },
+
+    async recordValidation(record) {
+      await pool.query(
+        `INSERT INTO setting (key, value) VALUES ($1, $2::jsonb)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+        [VALIDATION_KEY, JSON.stringify({ ...record, at: record.at.toISOString() })],
+      );
     },
   };
 }

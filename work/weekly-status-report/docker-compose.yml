@@ -37,6 +37,11 @@ services:
       SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
       SESSION_LIFETIME_HOURS: ${SESSION_LIFETIME_HOURS:-8}
       TRUST_PROXY: "1"
+      JIRA_BASE_URL: ${JIRA_BASE_URL:-}
+      JIRA_EMAIL: ${JIRA_EMAIL:-}
+      JIRA_API_TOKEN: ${JIRA_API_TOKEN:-}
+      JIRA_PROJECT_KEY: ${JIRA_PROJECT_KEY:-}
+      JIRA_BOARD_ID: ${JIRA_BOARD_ID:-}
     depends_on:
       migrate:
         condition: service_completed_successfully

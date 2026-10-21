@@ -92,7 +92,7 @@ function offsetMs(instant: Date, zone: string): number {
   return asUtc - Math.floor(instant.getTime() / 1000) * 1000;
 }
 
-function zonedMidnight(date: string, zone: string): Date {
+export function startOfLocalDate(date: string, zone: string): Date {
   const guess = Date.parse(`${date}T00:00:00Z`);
   const first = guess - offsetMs(new Date(guess), zone);
   const second = guess - offsetMs(new Date(first), zone);
@@ -124,8 +124,8 @@ function addDays(date: string, days: number): string {
 }
 
 function weekRange(monday: string, zone: string): WeekRange {
-  const start = zonedMidnight(monday, zone);
-  const end = new Date(zonedMidnight(addDays(monday, 7), zone).getTime() - 1);
+  const start = startOfLocalDate(monday, zone);
+  const end = new Date(startOfLocalDate(addDays(monday, 7), zone).getTime() - 1);
   return { weekStart: monday, weekEnd: addDays(monday, 6), start, end };
 }
 

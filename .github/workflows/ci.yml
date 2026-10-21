@@ -45,6 +45,10 @@ jobs:
       - run: npm run migrate
       - run: npm test
       - run: npm run build
+      - run: npm run bench:sync
+        env:
+          BENCH_ISSUES: "1000"
+          BENCH_LATENCY_MS: "50"
       - run: npm audit --audit-level=high
 
   frontend:

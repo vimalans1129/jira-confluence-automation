@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=../.env src/server.ts",
     "mock-jira": "tsx src/jira/mock/cli.ts",
+    "bench:sync": "tsx src/jira/mock/bench.ts",
     "start": "node --env-file-if-exists=../.env dist/server.js",
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",

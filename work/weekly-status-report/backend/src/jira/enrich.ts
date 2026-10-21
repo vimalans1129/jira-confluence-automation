@@ -25,7 +25,11 @@ export async function completeChangelog(
   const embedded = issue.changelog?.histories ?? [];
   const total = issue.changelog?.total;
   if (total === undefined || embedded.length >= total) return embedded;
+  return fetchChangelog(client, issue.key);
+}
 
+export async function fetchChangelog(client: JiraClient, key: string): Promise<ChangelogHistory[]> {
+  const issue = { key };
   const all: ChangelogHistory[] = [];
   let startAt = 0;
   for (;;) {

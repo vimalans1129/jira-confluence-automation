@@ -230,12 +230,12 @@ As the delivery manager, I can check from a settings page that my Jira connectio
 - **FR-019**: All RAG thresholds MUST be configurable.
 - **FR-020**: Planned completion MUST follow DEF-03; Epics without a due date are excluded from this rule and flagged "no due date".
 - **FR-021**: The calculated RAG and its triggering reasons MUST be shown.
-- **FR-022**: Users MUST be able to override RAG for any Epic or for the overall project through the web application, with a mandatory reason. An override applies to one reporting week only and does not carry forward; when a user opens a new week, the UI offers the previous week's overrides for confirmation. Overrides are stored in the database, and the dashboard and deck MUST show the overridden status and note the override.
+- **FR-022**: Users MUST be able to override RAG for any Epic or for the overall project through the web application, with a mandatory reason. An override applies to one reporting week only and does not carry forward; when a user opens a new week, the UI offers the previous week's overrides for confirmation. Overrides are stored in the database, and the dashboard and deck MUST show the overridden status and note the override. Creating, changing, or deleting an override marks the stored deck out of date, and the overall roll-up is recomputed from the stored report data without Jira calls. An override that names an Epic that does not exist produces a warning and is ignored.
 
 #### Snapshots and trends
 
 - **FR-023**: After each run, the system MUST persist one snapshot per week in PostgreSQL containing per-Epic RAG, points total and done, blocker count, and overall RAG.
-- **FR-024**: The report MUST compare with the most recent earlier snapshot (even if weeks were skipped) to show RAG change arrows and percent-complete deltas (DEF-11), or "n/a" when no earlier snapshot exists or the Epic is absent from it.
+- **FR-024**: The report MUST compare with the most recent earlier snapshot (even if weeks were skipped) to show RAG change arrows and percent-complete deltas (DEF-11), or "n/a" when no earlier snapshot exists or the Epic is absent from it. Before snapshots are implemented (Phase 1), every change and delta value shows "n/a".
 - **FR-025**: Re-running for the same week MUST replace that week's snapshot.
 
 #### Optional LLM summary
@@ -248,7 +248,7 @@ As the delivery manager, I can check from a settings page that my Jira connectio
 #### Validation
 
 - **FR-028**: System MUST provide a validation check, available through the API and the settings page, for Jira connectivity, project, board, Story Points field, and discovery of the Flagged field ID.
-- **FR-052**: The validation check MUST discover the Story Points field (a numeric field named "Story Points" or "Story point estimate") and the Flagged field (named "Flagged") and offer to save the discovered IDs as settings. It selects automatically only when exactly one candidate matches; with several candidates it lists each with ID, name, and type and requires the user to choose; with none it reports an error. The project key and board ID are required configuration, and the application MUST refuse to generate reports until validation has passed once.
+- **FR-052**: The validation check MUST discover the Story Points field (a numeric field named "Story Points" or "Story point estimate") and the Flagged field (named "Flagged") and offer to save the discovered IDs as settings. It selects automatically only when exactly one candidate matches; with several candidates it lists each with ID, name, and type and requires the user to choose; with none it reports an error. The project key and board ID are required configuration, and the application MUST refuse to generate reports until validation has passed once; the time of the last successful validation is stored as the report setting `validation_passed_at`, and changing the project key, board ID, or a field ID clears it.
 
 #### Access control
 
@@ -285,23 +285,23 @@ As the delivery manager, I can check from a settings page that my Jira connectio
 
 #### Configuration
 
-- **FR-036**: Settings follow a fixed precedence. Secrets and connection values (Jira base URL, email, API token, project key, board ID, database URL, session secret, administrator password hash, LLM variables) come from environment variables only and are read-only in the UI. Report settings (Story Points and Flagged field IDs, blocked statuses, report name, time zone, week start, comment length, RAG thresholds, trend weeks, name denylist) are stored in the database and edited on the settings page, with defaults defined in versioned code. All settings are validated on load and on save, and a committed `.env.example` lists every environment variable and contains no secrets.
+- **FR-036**: Settings follow a fixed precedence. Secrets and connection values (Jira base URL, email, API token, project key, board ID, database URL, session secret, administrator password hash, LLM variables) come from environment variables only and are read-only in the UI. Report settings (Story Points and Flagged field IDs, blocked statuses, report name, time zone (an IANA zone name), comment length, RAG thresholds, trend weeks, name denylist) are stored in the database and edited on the settings page, with every default listed in one versioned defaults module (including each RAG threshold). All settings are validated on load and on save, and a committed `.env.example` lists every environment variable and contains no secrets.
 - **FR-037**: Blocked status names MUST be configurable and matched case-insensitively.
 
 #### Web application and API
 
 - **FR-038**: The frontend MUST provide pages for a dashboard (overall RAG, milestone progress, trend), a report view (completed, planned, risks), RAG overrides, and settings with the validation check.
 - **FR-039**: The frontend MUST show loading, empty, and error states for every asynchronous view, validate forms on the client, and meet WCAG 2.1 AA basics (keyboard navigation, labels, contrast); RAG MUST be shown with text or an icon as well as color.
-- **FR-040**: The backend MUST expose a REST JSON API under `/api/v1` for reports, snapshots, overrides, validation, and deck download, with consistent status codes and a consistent error shape.
+- **FR-040**: The backend MUST expose a REST JSON API under `/api/v1` for reports, snapshots, overrides, validation, and deck download, with consistent status codes and one error shape: `{ "error": { "code", "message", "correlationId", "details" } }`, where `details` is an optional list of field-level problems and never contains secrets or raw Jira payloads.
 - **FR-041**: The backend MUST validate every request body and query string against a schema, and MUST validate Jira responses before use.
-- **FR-042**: The deck MUST be generated by the backend, stored in the database (one per week, replaced on regeneration), and delivered to the browser as a download named `Weekly_Status_<project key>_<week start YYYY-MM-DD>.pptx`; the browser never receives Jira credentials or raw Jira payloads. Approving a summary marks the stored deck out of date, and the user regenerates it from the stored report data without new Jira calls.
+- **FR-042**: The deck MUST be generated by the backend, stored in the database (one per week, replaced on regeneration), and delivered to the browser as a download named `Weekly_Status_<project key>_<week start YYYY-MM-DD>.pptx`; the browser never receives Jira credentials or raw Jira payloads. Approving a summary, or changing an override or a report setting that affects output, marks the stored deck out of date, and the user regenerates it from the stored report data without new Jira calls.
 - **FR-043**: Report generation MUST run as a tracked job whose status (queued, running, succeeded, failed), start and end time, warnings, and outcome are stored in the database and shown in the UI. Only one active job per week is allowed. On startup, jobs left queued or running are marked failed as "interrupted by restart", and a job that runs longer than 10 minutes is failed.
 - **FR-044**: A dry-run mode MUST compute metrics and RAG and show them without creating a deck or snapshot.
 - **FR-045**: The backend MUST expose a health endpoint that checks database connectivity.
 
 #### Persistence
 
-- **FR-046**: Snapshots, overrides, job history, approved summaries, and configuration changes made in the application MUST be stored in PostgreSQL 15 through versioned, forward-only migrations, using parameterized queries only.
+- **FR-046**: Snapshots, overrides, job history, approved summaries, and configuration changes made in the application MUST be stored in PostgreSQL 15 through versioned, forward-only migrations, using parameterized queries only. Retention: snapshots, overrides, approved summaries, and audit entries are kept indefinitely; stored decks and computed report payloads are kept for 52 weeks and pruned after each successful job; the job history rows are kept.
 - **FR-047**: Changes to overrides and settings MUST be recorded in an audit log with timestamp and the changed values, excluding secrets and individual names.
 
 ### Non-Functional Requirements

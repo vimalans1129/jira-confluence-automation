@@ -57,8 +57,8 @@
 - **Deps**: T0.4
 - **Covers**: FR-040, FR-041, FR-045, NFR-007
 - **Acceptance criteria**:
-  - A central error handler returns one error shape with code, message, and correlation ID.
-  - Structured logs include a correlation ID per request and never include secrets (verified by a test).
+  - A central error handler returns the FR-040 error shape (`error.code`, `message`, `correlationId`, optional `details`) with a correlation ID.
+  - Structured logs include a correlation ID per request and never include secrets (verified by a test); a documented redaction list names the fields never logged (tokens, passwords, cookies, prompts, comment bodies).
   - `GET /api/v1/health` reports database status and returns an error status when the database is down (tested with the container stopped).
   - Request validation middleware rejects an invalid body or query with a 400 in the standard shape.
 
@@ -72,6 +72,7 @@
   - State-changing requests without a valid CSRF token are rejected.
   - Every `/api/v1` route except health and login returns 401 when unauthenticated (route-table test).
   - Changing the session secret invalidates existing sessions.
+  - `POST /api/v1/auth/logout` ends the session and clears the cookie.
 
 ### T0.7 Minimal Login page and API client
 
@@ -88,13 +89,31 @@
 - **Covers**: NFR-005, SC-009, NFR-001
 - **Acceptance criteria**:
   - CI runs lint, type check, unit and API tests against a PostgreSQL 15 container, and `npm audit` (high severity blocks).
+  - The workflow file is at the repository root in `.github/workflows/ci.yml` and runs the application folder's commands.
   - The README documents the start commands; a clean checkout follows them and reaches a healthy stack.
 
 **Milestone M0 gate**: stack starts, health reports the database, protected routes reject anonymous calls, CI green.
 
+### T0.9 Dockerfiles and ignore files [P]
+
+- **Deps**: T0.3
+- **Covers**: NFR-005, NFR-001
+- **Acceptance criteria**:
+  - Backend and frontend each have a Dockerfile that builds and starts; Compose can run them with PostgreSQL.
+  - `.dockerignore` and `.gitignore` exclude `node_modules`, build output, and `.env`; no secret is committed (secret scan passes).
+
 ## Phase 1 - MVP report generation (M1)
 
 ### Domain logic (pure, test-first)
+
+### T1.0 Shared report data contract
+
+- **Deps**: T0.3
+- **Covers**: FR-009 to FR-012, FR-021, FR-030, FR-040
+- **Acceptance criteria**:
+  - A typed, schema-validated report model exists (Epic metrics, lists, blockers, RAG with reasons, warnings, overrides, optional summary).
+  - Domain logic, API routes, deck builders, and the UI import the same model; a sample fixture validates against it.
+  - Week-over-week fields allow "n/a" values.
 
 ### T1.1 Reporting period and time zone
 
@@ -102,6 +121,7 @@
 - **Test-first**: yes
 - **Covers**: FR-007, FR-008, DEF-01
 - **Acceptance criteria**:
+  - The time zone is an IANA zone name; an invalid name is rejected.
   - Default week is the most recent completed Monday to Sunday in the configured time zone.
   - The current week is selectable and uses current time as `as_of`; past weeks use period end.
   - Tests cover daylight-saving changes and a time zone different from the server's.
@@ -117,6 +137,9 @@
   - Planned next week uses the active sprint plus due dates, falling back to due dates with a warning.
   - Percent values and deltas are rounded as in DEF-07.
   - Issues without an Epic appear as "No Epic".
+  - An Epic with no child issues shows zero totals and causes no division error.
+  - Bug counts (opened, closed, currently open) include all project bugs regardless of Epic (FR-014).
+  - Week-over-week values are "n/a" until snapshots exist (FR-024).
 
 ### T1.3 Blocker detection and age
 
@@ -146,7 +169,7 @@
 - **Test-first**: yes
 - **Covers**: FR-033 to FR-035, SC-004
 - **Acceptance criteria**:
-  - Jira mention markup, account names, and denylist terms are replaced with a neutral placeholder.
+  - Jira mention markup, account names, issue-summary and comment names, and denylist terms are replaced with a neutral placeholder.
   - Mitigation text is truncated to the configured length, default 300.
   - Property test: no input containing a known name yields output containing it.
 
@@ -154,10 +177,12 @@
 
 ### T1.6 Settings with code defaults
 
-- **Deps**: T0.5
-- **Covers**: FR-004, FR-019, FR-036, FR-037
+- **Deps**: T0.5, T1.11
+- **Covers**: FR-004, FR-019, FR-036, FR-037, FR-047
 - **Acceptance criteria**:
-  - Settings table and repository exist; versioned defaults apply when no row exists.
+  - Settings table and repository exist; every default (including each RAG threshold) is listed in one versioned defaults module and applies when no row exists.
+  - Blocked status names are matched case-insensitively.
+  - Every saved settings change writes an audit entry.
   - Secrets and connection values are read only from the environment and never exposed by `GET /api/v1/settings`.
   - Invalid values are rejected on load and on save with specific messages.
 
@@ -168,7 +193,8 @@
 - **Acceptance criteria**:
   - `POST /api/v1/validate` checks connectivity, project, board, Story Points field, and Flagged field.
   - Exactly one candidate is selected automatically; several candidates are listed with ID, name, and type; none gives an error.
-  - Report generation is refused until validation has passed once.
+  - Report generation is refused until validation has passed once; success stores `validation_passed_at`, and changing the project key, board ID, or a field ID clears it.
+  - Saving discovered IDs works through the settings API in this phase (no page needed).
 
 ### Jira client
 
@@ -193,7 +219,7 @@
 
 ### T1.10 Issue history cache and incremental sync
 
-- **Deps**: T1.9, T1.11
+- **Deps**: T1.9, T1.11, T1.12
 - **Covers**: FR-055, DEF-14, NFR-001
 - **Acceptance criteria**:
   - Derived history (transitions, flag changes, point changes) is stored per issue with the Jira `updated` value and no author names.
@@ -206,7 +232,7 @@
 - **Deps**: T0.4
 - **Covers**: FR-042, FR-043, FR-046, FR-055
 - **Acceptance criteria**:
-  - Migrations create `report_job`, `issue_history`, `sync_state`, `report_deck`, and `setting` with keys, indexes, and timestamps.
+  - Migrations create `report_job`, `issue_history`, `sync_state`, `report_deck`, `setting`, and `audit_entry` with keys, indexes, and timestamps.
   - A unique partial index allows only one active job per week.
   - Migrations apply cleanly on an empty database.
 
@@ -230,6 +256,8 @@
   - A second request for the same week is rejected with a clear message and creates no duplicate.
   - On startup, queued or running jobs become failed as "interrupted by restart"; a job over 10 minutes is failed.
   - Dry run computes metrics and RAG and creates no deck or snapshot.
+  - Every warning is shown in the job result and written to the application log without secrets or names (NFR-002).
+  - After a successful job, decks and report payloads older than 52 weeks are pruned; snapshots and audit entries are kept (FR-046).
 
 ### T1.14 Report API routes
 
@@ -242,9 +270,12 @@
 
 ### T1.15 Deck slides 1 to 6 [P]
 
-- **Deps**: T1.4, T1.5, T0.1
-- **Covers**: FR-029 to FR-032, FR-042, SC-001
+- **Deps**: T1.0, T1.4, T1.5, T0.1
+- **Covers**: FR-029 to FR-032, FR-042, SC-001, SC-003
 - **Acceptance criteria**:
+  - A blocker without a comment shows "No mitigation recorded".
+  - Issue-key hyperlinks are built from the configured Jira base URL.
+  - Change-vs-last-week and delta values show "n/a" until snapshots exist.
   - Deck is 16:9 with titles of 24 pt or more, body of 12 pt or more, and RAG shown as text alongside color.
   - Slides 1 to 6 appear in the order of FR-030; issue keys are Jira hyperlinks.
   - Tables hold at most 10 rows per slide and continue across slides; text is truncated with an ellipsis; the deck is capped at 25 slides with a summarizing count and a warning.
@@ -270,6 +301,7 @@
   - Each asynchronous view has loading, empty, and error states.
   - RAG is shown with text or icon as well as color; keyboard navigation and labels pass an automated accessibility check.
   - The user can pick a week and time zone.
+  - The Report page shows "No mitigation recorded" for blockers without a comment; forms validate on the client (FR-039).
 
 ### T1.18 Generation progress, dry run, and deck download
 
@@ -286,6 +318,7 @@
 - **Covers**: SC-001 to SC-004
 - **Acceptance criteria**:
   - A Playwright test signs in, generates a report against the mock, sees it, and downloads the deck.
+  - The test environment seeds `validation_passed_at`, and a seed script lets a developer run the app against the mock Jira server locally.
   - All RAG boundary tests pass and the no-names scan passes on deck and API output.
 
 **Milestone M1 gate**: user stories 1 to 3 pass with mocked Jira.
@@ -317,8 +350,10 @@
 - **Deps**: T1.13, T1.11
 - **Covers**: FR-022, FR-046, FR-047
 - **Acceptance criteria**:
-  - Migration adds `rag_override` and `audit_entry`.
+  - Migration adds `rag_override` (the `audit_entry` table already exists from Phase 1).
   - `GET`, `POST`, and `DELETE /api/v1/overrides` require a reason and apply to one week only.
+  - An override naming a missing Epic produces a warning and is ignored.
+  - Any override change marks the stored deck stale and recomputes the roll-up from stored data without Jira calls.
   - Every create, change, and delete writes an audit entry with timestamp and values, excluding secrets and names.
 
 ### T2.4 Overrides page and display everywhere
@@ -400,7 +435,7 @@
 
 ### T4.1 Reference benchmark in CI
 
-- **Deps**: T1.12
+- **Deps**: T1.12, T3.5
 - **Covers**: NFR-003, DEF-15
 - **Acceptance criteria**:
   - On the reference runner, cold run is 120 s or less, warm run is 30 s or less, deck generation is 10 s or less, and dashboard API p95 is 500 ms or less.
@@ -474,9 +509,10 @@
 | FR-042 | T1.15, T1.16, T3.3 |
 | FR-043, FR-044 | T1.13, T1.18 |
 | FR-045 | T0.5 |
-| FR-046 | T0.4, T1.11, T2.3 |
-| FR-047 | T2.3, T3.1 |
+| FR-046 | T0.4, T1.11, T1.13, T2.3 |
+| FR-047 | T1.6, T2.3, T3.1 |
 | FR-048 to FR-051 | T0.6 |
+| Report contract, Dockerfiles | T1.0, T0.9 |
 | FR-054 | T2.2 |
 | FR-055 | T1.10 |
 | FR-056 | T4.5 |

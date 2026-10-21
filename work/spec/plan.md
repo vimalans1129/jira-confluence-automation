@@ -83,10 +83,10 @@ The existing prototype files in `weekly-status-report/` are all empty. Phase 0 k
 - Confirm the library choices (deck, validation, migrations, password hashing) with a short spike; all specification questions are already resolved.
 - Reorganize `weekly-status-report/` as described under Project Structure.
 - Create the `frontend/` and `backend/` packages with TypeScript `strict`, ESLint, and Prettier.
-- Add `docker-compose.yml` with PostgreSQL 15, `.env.example` (including `JIRA_*`, `APP_ADMIN_PASSWORD_HASH`, session secret, and optional `LLM_*` variables), and a migration runner.
+- Add `docker-compose.yml` with PostgreSQL 15, Dockerfiles for backend and frontend with `.dockerignore` and `.gitignore`, `.env.example` (including `JIRA_*`, `APP_ADMIN_PASSWORD_HASH`, session secret, and optional `LLM_*` variables), and a migration runner.
 - Add the backend skeleton: Express app, central error handler, structured logging with correlation IDs, `/api/v1/health` with a database check.
 - Add authentication: password sign-in, signed session cookie, login rate limiting, CSRF protection, and a guard on every route except health and sign-in (FR-048 to FR-051), with a minimal Login page.
-- Add CI running lint, type check, tests, and `npm audit`.
+- Add CI running lint, type check, tests, and `npm audit`; the workflow file lives at the repository root in `.github/workflows/`.
 - Add a README with the documented start commands.
 
 **Exit criteria (M0)**: `docker compose up`, `npm install`, and `npm run dev` start the stack; health endpoint reports the database; unauthenticated calls to protected routes are rejected; CI is green. Covers FR-045, FR-048 to FR-051, NFR-005, NFR-007, SC-009.
@@ -96,6 +96,7 @@ The existing prototype files in `weekly-status-report/` are all empty. Phase 0 k
 **Goal**: Generate a correct report for a chosen week and download slides 1 to 6.
 
 1. **Domain logic (pure, test-first)**
+   - Shared report data contract (typed schema of the computed report) defined first, used by domain logic, API, deck, and UI.
    - Week boundaries and time zone handling (DEF-01, FR-007, FR-008).
    - Metrics: milestone progress, completed this week, planned next week, overdue, bugs, using DEF-02, DEF-05, DEF-06, and DEF-07 (FR-009 to FR-014).
    - Blocker detection and age (DEF-04, FR-012).
@@ -106,7 +107,7 @@ The existing prototype files in `weekly-status-report/` are all empty. Phase 0 k
    - History cache: derived per-issue history stored with the Jira `updated` value, incremental sync with a 5-minute overlap, concurrency capped at 5, periodic key reconciliation (FR-055, DEF-14).
    - Recorded fixtures and mocks for every call, plus the mock server for the reference benchmark (DEF-15), built early so the smoke benchmark runs from this phase.
 3. **Persistence and jobs**
-   - Migrations for job history, issue history, snapshots, and stored decks (FR-042, FR-043, FR-046, FR-055).
+   - Migrations for job history, issue history, snapshots, stored decks, settings, and the audit log (FR-042, FR-043, FR-046, FR-047, FR-055). Retention pruning of decks and report payloads older than 52 weeks (FR-046).
    - In-process job runner with statuses queued, running, succeeded, and failed; one active job per week enforced by a unique partial index; startup recovery of interrupted jobs and a 10-minute timeout.
 4. **API**
    - Schema-validated routes: start generation, job status, report data, deck download (FR-040 to FR-042).
@@ -126,7 +127,7 @@ The existing prototype files in `weekly-status-report/` are all empty. Phase 0 k
 - Delta and arrow display, with "n/a" when no history exists (FR-024).
 - Trend chart on the dashboard and trend slide 7, showing 6 weeks by default and configurable from 4 to 12 (FR-030, FR-054).
 - Overrides: table, API, Overrides page, mandatory reason validation (FR-022), and display in dashboard and deck.
-- Audit log for override changes (FR-047).
+- Audit log for override changes (FR-047); the audit table itself is created in Phase 1.
 - Concurrency rule: reject duplicate generation for the same week.
 
 **Exit criteria (M2)**: Two consecutive weeks produce correct deltas and a trend; overrides appear with their reason everywhere; every override change is audited. Covers user story 4, SC-002, SC-005.
@@ -135,7 +136,7 @@ The existing prototype files in `weekly-status-report/` are all empty. Phase 0 k
 
 **Goal**: Optional LLM summary with review, validation tooling, and the appendix.
 
-- Settings page and validation endpoint: connectivity, project, board, Story Points field and Flagged field discovery by name, saving discovered IDs, and blocking report generation until validation has passed once (FR-028, FR-052, user story 6).
+- Settings page and validation endpoint: the validation endpoint and the generation block (connectivity, project, board, Story Points field and Flagged field discovery by name, saving discovered IDs, `validation_passed_at`) are built in Phase 1; Phase 3 adds the settings page that exposes them (FR-028, FR-052, user story 6).
 - Settings persistence with audit entries (FR-036, FR-047).
 - LLM client behind an explicit option, using the OpenAI-compatible interface and sending only the DEF-12 fields; draft storage, edit, and approval flow; deck uses only approved text; prompts and responses not logged (FR-026, FR-027, FR-053).
 - Appendix slide 8 with RAG rules, data notes, warnings, and override notes (FR-030).
@@ -179,7 +180,7 @@ The existing prototype files in `weekly-status-report/` are all empty. Phase 0 k
 | `rag_override` | Manual overrides | `id`, `scope`, `epic_key`, `rag`, `reason`, `week_start`, `created_at` |
 | `summary_draft` | LLM drafts and approvals | `id`, `week_start`, `text`, `approved`, `updated_at` |
 | `audit_entry` | Changes to overrides and settings | `id`, `entity`, `change`, `created_at` |
-| `setting` | Editable report settings (secrets and connection values stay in environment variables) | `key`, `value`, `updated_at` |
+| `setting` | Editable report settings, including `validation_passed_at` (secrets and connection values stay in environment variables) | `key`, `value`, `updated_at` |
 
 All tables carry `created_at` and `updated_at`, use explicit foreign keys and indexes, and are changed only through migrations.
 

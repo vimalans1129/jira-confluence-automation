@@ -53,7 +53,11 @@ describe("login", () => {
 
   it("signs in with the keyboard and shows the app", async () => {
     mockFetch((url) =>
-      url.endsWith("/auth/login") ? { status: 200, body: session } : unauthorized,
+      url.endsWith("/auth/login")
+        ? { status: 200, body: session }
+        : url.endsWith("/reports/latest")
+          ? { status: 200, body: { job: null } }
+          : unauthorized,
     );
     render(<App />);
     await userEvent.type(await screen.findByLabelText("Password"), "secret{Enter}");

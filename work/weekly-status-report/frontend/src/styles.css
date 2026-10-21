@@ -1,0 +1,63 @@
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  color: #1f2937;
+}
+main {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th,
+td {
+  border: 1px solid #9ca3af;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+}
+form div {
+  margin-bottom: 0.5rem;
+}
+label {
+  display: block;
+}
+input[type="checkbox"] + label {
+  display: inline;
+  margin-left: 0.35rem;
+}
+[role="alert"] {
+  color: #b91c1c;
+}
+.rag {
+  display: inline-block;
+  padding: 0 0.5rem;
+  border-radius: 0.25rem;
+  font-weight: 700;
+}
+.rag-green {
+  background: #166534;
+  color: #fff;
+}
+.rag-amber {
+  background: #fbbf24;
+  color: #111827;
+}
+.rag-red {
+  background: #b91c1c;
+  color: #fff;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+:focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}

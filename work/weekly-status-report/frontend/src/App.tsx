@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getSession, logout, setUnauthorizedHandler } from "./api/client";
 import { LoginPage } from "./pages/LoginPage";
+import { ReportsArea } from "./pages/ReportsArea";
 
 type AuthState = "checking" | "signedOut" | "signedIn";
 
@@ -37,6 +38,7 @@ export function App() {
       <button type="button" onClick={() => void handleLogout()}>
         Sign out
       </button>
+      <ReportsArea />
     </main>
   );
 }

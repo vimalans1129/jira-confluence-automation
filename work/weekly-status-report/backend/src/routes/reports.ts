@@ -60,6 +60,15 @@ export function reportsRouter(deps: ReportRouteDeps): Router {
     }
   });
 
+  router.get("/reports/latest", async (_req, res, next) => {
+    try {
+      const job = await jobs.latest();
+      res.json({ job: job ? await describeJob(jobs, job) : null });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.get("/reports/:id", async (req, res, next) => {
     try {
       res.json(await describeJob(jobs, await loadJob(jobs, req.params["id"])));

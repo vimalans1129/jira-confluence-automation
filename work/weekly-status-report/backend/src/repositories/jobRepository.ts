@@ -35,6 +35,7 @@ export interface DeckRecord {
 export interface JobRepository {
   create(job: NewJob): Promise<JobRecord>;
   get(id: number): Promise<JobRecord | null>;
+  latest(): Promise<JobRecord | null>;
   markRunning(id: number): Promise<void>;
   setStage(id: number, stage: string): Promise<void>;
   // Return false when the job already left "running", for example after a timeout.
@@ -112,6 +113,13 @@ export function createJobRepository(pool: pg.Pool): JobRepository {
       const { rows } = await pool.query<Row>(`SELECT ${COLUMNS} FROM report_job WHERE id = $1`, [
         id,
       ]);
+      return rows[0] ? toRecord(rows[0]) : null;
+    },
+
+    async latest() {
+      const { rows } = await pool.query<Row>(
+        `SELECT ${COLUMNS} FROM report_job ORDER BY queued_at DESC, id DESC LIMIT 1`,
+      );
       return rows[0] ? toRecord(rows[0]) : null;
     },
 

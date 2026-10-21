@@ -210,6 +210,15 @@ describe.skipIf(!url)("report API", () => {
     expect((deck.body as Buffer).toString()).toBe("PK-regenerated");
   });
 
+  it("returns the latest job, or null when there is none", async () => {
+    expect((await agent.get("/api/v1/reports/latest")).body).toEqual({ job: null });
+    const created = await create();
+    await service.idle();
+    const latest = await agent.get("/api/v1/reports/latest");
+    expect(latest.body.job.id).toBe(created.body.id);
+    expect((await anonymous.get("/api/v1/reports/latest")).status).toBe(401);
+  });
+
   it("refuses to regenerate a deck for dry runs, unknown ids and missing CSRF", async () => {
     const dry = await create({ dryRun: true });
     await service.idle();

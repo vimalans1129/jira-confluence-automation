@@ -31,8 +31,8 @@
 - **Covers**: plan Project Structure
 - **Acceptance criteria**:
   - The Python `wsr/` package, `requirements.txt`, `snapshots/`, `output/`, `config.yaml`, and `overrides.yaml` are removed.
-  - Placeholder `.js` and `.jsx` files are converted to `.ts` and `.tsx` under the planned structure.
-  - No empty placeholder file remains.
+  - Placeholder `.js` and `.jsx` files are not kept as empty `.ts` and `.tsx` files; the planned folders are kept with `.gitkeep`, and the later tasks create the real TypeScript files.
+  - No empty placeholder file remains (only `.gitkeep` folder markers).
 
 ### T0.3 Create TypeScript packages and quality tooling
 

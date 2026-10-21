@@ -72,7 +72,7 @@ weekly-status-report/        # existing folder, reused as the application root
   .env.example
 ```
 
-The existing prototype files in `weekly-status-report/` are all empty. Phase 0 keeps the `backend/` and `frontend/` layout, converts the placeholder `.js` and `.jsx` files to TypeScript (`.ts` and `.tsx`), and removes the Python `wsr/` package, `requirements.txt`, the file-based `snapshots/` and `output/` folders, `config.yaml`, and `overrides.yaml`, as decided in the specification.
+The existing prototype files in `weekly-status-report/` were all empty. Phase 0 keeps the `backend/` and `frontend/` layout, deletes the empty placeholders (the later tasks create the real `.ts` and `.tsx` files), and removes the Python `wsr/` package, `requirements.txt`, the file-based `snapshots/` and `output/` folders, `config.yaml`, and `overrides.yaml`, as decided in the specification.
 
 ## Phases and Milestones
 

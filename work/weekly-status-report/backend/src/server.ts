@@ -6,6 +6,7 @@ import { createJobRepository } from "./repositories/jobRepository.js";
 import { createPool, databaseCheck } from "./repositories/pool.js";
 import { createSettingsRepository } from "./repositories/settingsRepository.js";
 import { createReportService } from "./services/reportService.js";
+import { buildDeck } from "./services/deckBuilder.js";
 
 const env = loadEnv();
 const logger = createLogger(env.LOG_LEVEL);
@@ -19,6 +20,11 @@ const service = createReportService({
   history: createHistoryRepository(pool),
   connection,
   logger,
+  buildDeck: async (report) => {
+    const deck = await buildDeck(report, { jiraBaseUrl: connection?.baseUrl ?? null });
+    for (const w of deck.warnings) logger.warn({ code: w.code }, "deck warning");
+    return deck;
+  },
 });
 
 await service.recoverOnStartup();

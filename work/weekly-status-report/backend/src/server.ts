@@ -7,6 +7,7 @@ import { createPool, databaseCheck } from "./repositories/pool.js";
 import { createSettingsRepository } from "./repositories/settingsRepository.js";
 import { createReportService } from "./services/reportService.js";
 import { buildDeck } from "./services/deckBuilder.js";
+import type { Report } from "./contract/index.js";
 
 const env = loadEnv();
 const logger = createLogger(env.LOG_LEVEL);
@@ -14,17 +15,18 @@ const pool = createPool(env.DATABASE_URL, logger);
 const settings = createSettingsRepository(pool);
 const jobs = createJobRepository(pool);
 const connection = toJiraConnection(env);
+const deckForReport = async (report: Report) => {
+  const deck = await buildDeck(report, { jiraBaseUrl: connection?.baseUrl ?? null });
+  for (const w of deck.warnings) logger.warn({ code: w.code }, "deck warning");
+  return deck;
+};
 const service = createReportService({
   jobs,
   settings,
   history: createHistoryRepository(pool),
   connection,
   logger,
-  buildDeck: async (report) => {
-    const deck = await buildDeck(report, { jiraBaseUrl: connection?.baseUrl ?? null });
-    for (const w of deck.warnings) logger.warn({ code: w.code }, "deck warning");
-    return deck;
-  },
+  buildDeck: deckForReport,
 });
 
 await service.recoverOnStartup();
@@ -35,7 +37,7 @@ const app = createApp({
   auth: toAuthConfig(env),
   settings,
   validate: { settings, connection },
-  reports: { service, jobs },
+  reports: { service, jobs, buildDeck: deckForReport },
 });
 const server = app.listen(env.PORT, () => {
   logger.info({ port: env.PORT }, "server listening");

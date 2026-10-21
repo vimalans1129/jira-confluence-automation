@@ -1,11 +1,13 @@
 import { Router, type Response } from "express";
 import { AppError } from "../errors.js";
 import type { JobRecord, JobRepository } from "../repositories/jobRepository.js";
-import type { ReportService } from "../services/reportService.js";
+import type { ReportService, DeckOutput } from "../services/reportService.js";
+import type { Report } from "../contract/index.js";
 
 export interface ReportRouteDeps {
   service: ReportService;
   jobs: JobRepository;
+  buildDeck?: (report: Report) => Promise<DeckOutput>;
 }
 
 const PPTX = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
@@ -97,6 +99,35 @@ export function reportsRouter(deps: ReportRouteDeps): Router {
         .set("content-disposition", `attachment; filename="${deck.fileName}"`)
         .set("cache-control", "no-store")
         .send(deck.content);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post("/reports/:id/deck", async (req, res, next) => {
+    try {
+      const job = await loadJob(jobs, req.params["id"]);
+      if (job.status !== "succeeded" || job.dryRun) {
+        throw new AppError(
+          409,
+          "DECK_NOT_AVAILABLE",
+          "Only a completed, non-dry-run report has a deck.",
+        );
+      }
+      if (!job.report) {
+        throw new AppError(410, "REPORT_PRUNED", "The report data is past the retention period.");
+      }
+      if (!deps.buildDeck) {
+        throw new AppError(501, "DECK_NOT_CONFIGURED", "Deck generation is not configured.");
+      }
+      const deck = await deps.buildDeck(job.report);
+      await jobs.saveDeck({
+        weekStart: job.weekStart,
+        jobId: job.id,
+        fileName: deck.fileName,
+        content: deck.content,
+      });
+      res.json(await describeJob(jobs, job));
     } catch (err) {
       next(err);
     }

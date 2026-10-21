@@ -65,7 +65,14 @@ describe.skipIf(!url)("report API", () => {
         loginMaxFailures: 5,
       },
       settings,
-      reports: { service, jobs },
+      reports: {
+        service,
+        jobs,
+        buildDeck: async () => ({
+          fileName: "Weekly_Status_DEMO_2026-10-12.pptx",
+          content: Buffer.from("PK-regenerated"),
+        }),
+      },
     });
     agent = request.agent(app);
     csrf = (await agent.post("/api/v1/auth/login").send({ password: "pw" })).body.csrfToken;
@@ -178,6 +185,39 @@ describe.skipIf(!url)("report API", () => {
     expect(status.body.status).toBe("failed");
     expect(status.body.error.code).toBe("JIRA_AUTH_FAILED");
     expect((await agent.get(`/api/v1/reports/${created.body.id}/data`)).status).toBe(409);
+  });
+
+  it("regenerates the deck from stored data without calling Jira and clears the stale flag", async () => {
+    const created = await create();
+    await service.idle();
+    const id = created.body.id;
+    await pool!.query("UPDATE report_deck SET stale = true");
+    expect((await agent.get(`/api/v1/reports/${id}`)).body.deckStale).toBe(true);
+
+    const before = mock.stats.requests;
+    const regenerated = await agent.post(`/api/v1/reports/${id}/deck`).set("x-csrf-token", csrf);
+    expect(regenerated.status).toBe(200);
+    expect(regenerated.body).toMatchObject({ hasDeck: true, deckStale: false });
+    expect(mock.stats.requests).toBe(before);
+    const deck = await agent
+      .get(`/api/v1/reports/${id}/deck`)
+      .buffer(true)
+      .parse((res, cb) => {
+        const chunks: Buffer[] = [];
+        res.on("data", (c: Buffer) => chunks.push(c));
+        res.on("end", () => cb(null, Buffer.concat(chunks)));
+      });
+    expect((deck.body as Buffer).toString()).toBe("PK-regenerated");
+  });
+
+  it("refuses to regenerate a deck for dry runs, unknown ids and missing CSRF", async () => {
+    const dry = await create({ dryRun: true });
+    await service.idle();
+    const post = (id: number | string) =>
+      agent.post(`/api/v1/reports/${id}/deck`).set("x-csrf-token", csrf);
+    expect((await post(dry.body.id)).status).toBe(409);
+    expect((await post(999999)).status).toBe(404);
+    expect((await agent.post(`/api/v1/reports/${dry.body.id}/deck`)).status).toBe(403);
   });
 
   it("never exposes credentials, raw Jira payloads, or person names", async () => {

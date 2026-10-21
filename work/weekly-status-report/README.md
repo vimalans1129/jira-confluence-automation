@@ -62,7 +62,17 @@ cd backend
 npm run migrate
 ```
 
-`npm run migrate` applies pending migrations from `backend/migrations/` (plain SQL files, forward-only, no down sections) and is safe to run repeatedly. It reads `DATABASE_URL` from the environment or from `../.env`. Compose starts only PostgreSQL 15; the application containers are added in task T0.9.
+`npm run migrate` applies pending migrations from `backend/migrations/` (plain SQL files, forward-only, no down sections) and is safe to run repeatedly. It reads `DATABASE_URL` from the environment or from `../.env`. By default Compose starts only PostgreSQL 15.
+
+## Running in containers
+
+Fill in `.env` as in the Quick start (including `APP_ADMIN_PASSWORD_HASH` and `SESSION_SECRET`), then from the project root:
+
+```text
+docker compose --profile app up -d --build
+```
+
+This builds the backend and frontend images, runs the migrations once (the `migrate` service exits when done), starts the API (internal port 3000) and serves the frontend on http://localhost:8080 (`FRONTEND_PORT` to change), where nginx forwards `/api` to the backend. Both containers run as non-root users and contain no tests, scripts or `.env`; secrets are passed only as environment variables at run time. The backend runs with `NODE_ENV=production`, so the session cookie is `Secure`: browsers accept it over plain http only on `localhost`; use HTTPS in front of any real deployment.
 
 ## Backend behavior
 

@@ -17,6 +17,8 @@ export function GeneratePanel({ job, submitError, onGenerate, onJobChanged }: Pr
   const [errors, setErrors] = useState<FormErrors>({});
   const [busy, setBusy] = useState(false);
   const [deckError, setDeckError] = useState<string | null>(null);
+  const [deckMessage, setDeckMessage] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
 
   const running = job?.status === "queued" || job?.status === "running";
 
@@ -36,11 +38,21 @@ export function GeneratePanel({ job, submitError, onGenerate, onJobChanged }: Pr
 
   async function deckAction(action: () => Promise<void>) {
     setDeckError(null);
+    setDeckMessage(null);
     try {
       await action();
     } catch (err) {
       setDeckError(err instanceof ApiError ? err.message : "The deck request failed.");
     }
+  }
+
+  async function regenerate(id: number) {
+    setRegenerating(true);
+    await deckAction(async () => {
+      onJobChanged(await regenerateDeck(id));
+      setDeckMessage("The new deck is ready for download.");
+    });
+    setRegenerating(false);
   }
 
   return (
@@ -126,14 +138,11 @@ export function GeneratePanel({ job, submitError, onGenerate, onJobChanged }: Pr
               <button type="button" onClick={() => void deckAction(() => downloadDeck(job.id))}>
                 Download deck
               </button>{" "}
-              <button
-                type="button"
-                onClick={() =>
-                  void deckAction(async () => onJobChanged(await regenerateDeck(job.id)))
-                }
-              >
-                Regenerate deck
+              <button type="button" disabled={regenerating} onClick={() => void regenerate(job.id)}>
+                {regenerating ? "Regenerating…" : "Regenerate deck"}
               </button>
+              {regenerating && <p role="status">Regenerating the deck…</p>}
+              {deckMessage && <p role="status">{deckMessage}</p>}
             </div>
           )}
           {deckError && <p role="alert">{deckError}</p>}

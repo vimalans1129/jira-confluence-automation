@@ -230,6 +230,18 @@ describe("generate form", () => {
     expect(await screen.findByText(/Jira could not be reached/)).toBeInTheDocument();
   });
 
+  it("tells the user when a regenerated deck is ready", async () => {
+    const calls = mockApi((m, url) => {
+      if (m === "POST" && url.endsWith("/reports/1/deck"))
+        return { status: 200, body: job({ deckStale: false }) };
+      return ready(job({ deckStale: true }))(m, url);
+    });
+    render(<ReportsArea />);
+    await userEvent.click(await screen.findByRole("button", { name: "Regenerate deck" }));
+    expect(await screen.findByText("The new deck is ready for download.")).toBeInTheDocument();
+    expect(calls.some((c) => c.method === "POST" && c.url.endsWith("/reports/1/deck"))).toBe(true);
+  });
+
   it("downloads the deck under the server-provided file name", async () => {
     const created: HTMLAnchorElement[] = [];
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (

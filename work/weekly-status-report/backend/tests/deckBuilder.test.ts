@@ -54,7 +54,72 @@ describe("deck builder", () => {
     expect(titles[3]).toContain("Completed this week");
     expect(titles[4]).toContain("Planned next week");
     expect(titles[5]).toContain("Key risks and issues");
+    expect(titles[6]).toContain("Trend");
     expect(titles[titles.length - 1]).toContain("Appendix");
+  });
+
+  it("shows RAG and percent complete per week on slide 7", async () => {
+    const trend = [
+      {
+        weekStart: "2026-10-05",
+        overallRag: "Amber" as const,
+        percentComplete: 40.5,
+        blockerCount: 2,
+        epics: [],
+      },
+      {
+        weekStart: "2026-10-12",
+        overallRag: "Green" as const,
+        percentComplete: 55,
+        blockerCount: 0,
+        epics: [],
+      },
+    ];
+    const { xml } = await unpack((await buildDeck(sampleReport, { trend })).content);
+    const slide = text(xml[6]!);
+    expect(slide).toContain("2026-10-05");
+    expect(slide).toContain("Amber");
+    expect(slide).toContain("40.5%");
+    expect(slide).toContain("Green");
+    expect(slide).toContain("55%");
+  });
+
+  it("says so on slide 7 when there is no earlier week", async () => {
+    const { xml } = await unpack((await buildDeck(sampleReport)).content);
+    expect(text(xml[6]!)).toContain("No earlier weeks");
+  });
+
+  it("marks overridden statuses and lists the reason and calculated RAG", async () => {
+    const report: Report = {
+      ...sampleReport,
+      epics: sampleReport.epics.map((e, i) =>
+        i === 0
+          ? {
+              ...e,
+              rag: {
+                ...e.rag,
+                calculated: "Green",
+                effective: "Red",
+                overridden: true,
+                overrideReason: "Vendor slip",
+              },
+            }
+          : e,
+      ),
+      overrides: [
+        {
+          scope: "epic",
+          epicKey: sampleReport.epics[0]!.epicKey,
+          rag: "Red",
+          reason: "Vendor slip",
+        },
+      ],
+    };
+    const { xml } = await unpack((await buildDeck(report)).content);
+    expect(text(xml[2]!)).toContain("Red*");
+    const appendix = text(xml[xml.length - 1]!);
+    expect(appendix).toContain("calculated Green");
+    expect(appendix).toContain("Vendor slip");
   });
 
   it("is 16:9 and uses at least 24pt titles and 12pt body text", async () => {

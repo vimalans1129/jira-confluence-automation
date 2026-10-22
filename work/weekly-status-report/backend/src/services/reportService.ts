@@ -9,6 +9,7 @@ import { fetchActiveSprint, fetchLatestComment, fetchStatusCategories } from "..
 import { syncProject, type HistoryStore } from "../jira/sync.js";
 import type { Logger } from "../logger.js";
 import type { JobRecord, JobRepository } from "../repositories/jobRepository.js";
+import type { OverrideRepository } from "../repositories/overrideRepository.js";
 import type { SettingsRepository } from "../repositories/settingsRepository.js";
 import type { SnapshotRepository } from "../repositories/snapshotRepository.js";
 import { buildReport } from "./reportBuilder.js";
@@ -39,6 +40,7 @@ export interface ReportServiceDeps {
   settings: SettingsRepository;
   history: HistoryStore;
   snapshots?: SnapshotRepository;
+  overrides?: OverrideRepository;
   connection: JiraConnection | null;
   logger: Logger;
   createClient?: (connection: JiraConnection, settings: Settings) => JiraClient;
@@ -114,6 +116,7 @@ export function createReportService(deps: ReportServiceDeps): ReportService {
       fetchComment: (key) => fetchLatestComment(client, key),
       dryRun: job.dryRun,
       previous: (await deps.snapshots?.findPrevious(period.weekStart)) ?? null,
+      overrides: (await deps.overrides?.list(period.weekStart)) ?? [],
     });
 
     if (!job.dryRun && deps.buildDeck) {

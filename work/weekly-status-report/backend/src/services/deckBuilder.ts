@@ -1,5 +1,6 @@
 ﻿import PptxGenJSModule from "pptxgenjs";
 import { NOT_AVAILABLE, type Rag, type Report } from "../contract/index.js";
+import type { TrendWeek } from "./trend.js";
 
 export const MAX_ROWS_PER_SLIDE = 10;
 export const MAX_SLIDES = 25;
@@ -56,9 +57,12 @@ export function deckFileName(report: Pick<Report, "projectKey" | "weekStart">): 
 const fmt = (value: number): string => (Number.isInteger(value) ? String(value) : value.toFixed(1));
 const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? "" : "s"}`;
 
-function ragCell(rag: Rag): Cell {
+function ragCell(rag: Rag, overridden = false): Cell {
   const style = RAG_STYLE[rag];
-  return { text: rag, options: { bold: true, fill: { color: style.fill }, color: style.color } };
+  return {
+    text: overridden ? `${rag}*` : rag,
+    options: { bold: true, fill: { color: style.fill }, color: style.color },
+  };
 }
 
 function chunk<T>(items: T[], size: number): T[][] {
@@ -69,7 +73,7 @@ function chunk<T>(items: T[], size: number): T[][] {
 
 export function buildDeck(
   report: Report,
-  options: { jiraBaseUrl?: string | null } = {},
+  options: { jiraBaseUrl?: string | null; trend?: TrendWeek[] } = {},
 ): Promise<BuiltDeck> {
   const base = options.jiraBaseUrl?.replace(/\/+$/, "") ?? null;
   const keyCell = (key: string): Cell => ({
@@ -90,7 +94,7 @@ export function buildDeck(
       emptyText: "No epics found for this project.",
       rows: report.epics.map((epic) => [
         { text: truncate(epic.name, 40) },
-        ragCell(epic.rag.effective),
+        ragCell(epic.rag.effective, epic.rag.overridden),
         { text: `${fmt(epic.percentComplete)}%` },
         {
           text: `${fmt(epic.doneUnits)} / ${fmt(epic.totalUnits)} ${epic.basis === "points" ? "pts" : "items"}`,
@@ -204,6 +208,14 @@ export function buildDeck(
     `${plural(report.blockers.length, "open blocker")}`,
     `Bugs: ${report.bugs.opened} opened, ${report.bugs.closed} closed, ${report.bugs.currentlyOpen} currently open`,
     ...report.overall.rag.reasons.slice(0, 3).map((r) => truncate(r, 110)),
+    ...(report.overall.rag.overridden
+      ? [
+          truncate(
+            `Overall status overridden from ${report.overall.rag.calculated}: ${report.overall.rag.overrideReason ?? ""}`,
+            140,
+          ),
+        ]
+      : []),
   ];
   if (report.summary?.approved && report.summary.text)
     highlights.push(truncate(report.summary.text, 300));
@@ -252,15 +264,68 @@ export function buildDeck(
     }
   }
 
+  // 7 Trend
+  const trend = newSlide("Trend");
+  const weeks = options.trend ?? [];
+  if (weeks.length === 0) {
+    trend.addText("No earlier weeks have been recorded yet.", {
+      x: MARGIN,
+      y: 1.2,
+      w: SLIDE_W - 2 * MARGIN,
+      h: 0.5,
+      fontSize: BODY_PT + 2,
+    });
+  } else {
+    const head: Row = ["Week", "Overall RAG", "% complete", "Blockers"].map((text) => ({
+      text,
+      options: { bold: true, fill: { color: "E5E7EB" } },
+    }));
+    const rows: Row[] = weeks.map((w) => [
+      { text: w.weekStart },
+      ragCell(w.overallRag),
+      { text: w.percentComplete === null ? NOT_AVAILABLE : `${fmt(w.percentComplete)}%` },
+      { text: String(w.blockerCount) },
+    ]);
+    trend.addTable([head, ...rows] as unknown as PptxTable, {
+      x: MARGIN,
+      y: 1.1,
+      w: 4.6,
+      colW: [1.3, 1.3, 1.1, 0.9],
+      fontSize: BODY_PT,
+      border: { type: "solid", pt: 0.5, color: "BDBDBD" },
+      valign: "middle",
+    });
+    const plotted = weeks.filter((w) => w.percentComplete !== null);
+    if (plotted.length > 1) {
+      trend.addChart(
+        "line" as never,
+        [
+          {
+            name: "% complete",
+            labels: plotted.map((w) => w.weekStart.slice(5)),
+            values: plotted.map((w) => w.percentComplete as number),
+          },
+        ],
+        { x: 5.3, y: 1.1, w: 4.2, h: 3.2, valAxisMinVal: 0, valAxisMaxVal: 100, showLegend: false },
+      );
+    }
+  }
+
   // 8 Appendix
   const appendix = newSlide("Appendix");
   const notes = [
     "RAG rules: Red when overdue or at risk beyond thresholds, Amber when behind plan, Green otherwise.",
     `Time zone: ${report.timeZone}. Data as of ${report.asOf}.`,
-    ...report.overrides.map(
-      (o) =>
-        `Override (${o.scope}${o.epicKey ? ` ${o.epicKey}` : ""}): ${o.rag}. ${truncate(o.reason, 120)}`,
-    ),
+    ...report.overrides.map((o) => {
+      const calculated =
+        o.scope === "overall"
+          ? report.overall.rag.calculated
+          : report.epics.find((e) => e.epicKey === o.epicKey)?.rag.calculated;
+      return truncate(
+        `Override (${o.scope}${o.epicKey ? ` ${o.epicKey}` : ""}): ${o.rag}, calculated ${calculated ?? "unknown"}. ${o.reason}`,
+        140,
+      );
+    }),
     ...[...report.warnings, ...warnings].map((w) =>
       truncate(`Warning ${w.code}: ${w.message}`, 140),
     ),
@@ -274,7 +339,7 @@ export function buildDeck(
     fileName: deckFileName(report),
     content: content as Buffer,
     warnings,
-    slideCount: 3 + pages.length,
+    slideCount: 4 + pages.length,
   }));
 }
 
@@ -311,7 +376,7 @@ function groupedSection(
 }
 
 function paginate(sections: Section[], warnings: BuiltDeck["warnings"]): Page[] {
-  const fixedSlides = 3; // title, executive summary, appendix
+  const fixedSlides = 4; // title, executive summary, trend, appendix
   const perSection = sections.map((section) => {
     const chunks = chunk(section.rows, MAX_ROWS_PER_SLIDE);
     return { section, chunks: chunks.length ? chunks : [[]], omittedRows: 0 };

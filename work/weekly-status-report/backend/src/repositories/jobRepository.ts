@@ -46,6 +46,10 @@ export interface JobRepository {
   prune(cutoffWeekStart: string): Promise<{ reports: number; decks: number }>;
   saveDeck(deck: Omit<DeckRecord, "stale">): Promise<void>;
   getDeck(weekStart: string): Promise<DeckRecord | null>;
+  /** The newest finished, non-dry-run report for the week that still has its data. */
+  latestSucceeded(weekStart: string): Promise<JobRecord | null>;
+  updateReport(id: number, report: Report, warnings: ReportWarning[]): Promise<void>;
+  markDeckStale(weekStart: string): Promise<void>;
 }
 
 const COLUMNS = `id, to_char(week_start, 'YYYY-MM-DD') AS week_start, time_zone, dry_run, status,
@@ -204,6 +208,30 @@ export function createJobRepository(pool: pg.Pool): JobRepository {
                content = EXCLUDED.content, stale = false`,
         [deck.weekStart, deck.jobId, deck.fileName, deck.content],
       );
+    },
+
+    async latestSucceeded(weekStart) {
+      const { rows } = await pool.query<Row>(
+        `SELECT ${COLUMNS} FROM report_job
+         WHERE week_start = $1::date AND status = 'succeeded' AND dry_run = false
+           AND report IS NOT NULL
+         ORDER BY id DESC LIMIT 1`,
+        [weekStart],
+      );
+      return rows[0] ? toRecord(rows[0]) : null;
+    },
+
+    async updateReport(id, report, warnings) {
+      await pool.query(
+        "UPDATE report_job SET report = $2::jsonb, warnings = $3::jsonb WHERE id = $1",
+        [id, JSON.stringify(report), JSON.stringify(warnings)],
+      );
+    },
+
+    async markDeckStale(weekStart) {
+      await pool.query("UPDATE report_deck SET stale = true WHERE week_start = $1::date", [
+        weekStart,
+      ]);
     },
 
     async getDeck(weekStart) {

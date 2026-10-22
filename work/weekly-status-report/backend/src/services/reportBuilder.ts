@@ -19,9 +19,11 @@ import {
   ragChange,
   rollUpOverall,
 } from "../domain/rag.js";
+import { applyOverrides } from "./overrides.js";
 import { sanitizeMitigation, sanitizeText } from "../domain/sanitizer.js";
 import type { JiraIssue } from "../jira/client.js";
 import type { ActiveSprint, DerivedHistory } from "../jira/enrich.js";
+import type { OverrideRecord } from "../repositories/overrideRepository.js";
 import { NO_EPIC_KEY, type Snapshot } from "../repositories/snapshotRepository.js";
 
 export interface BuildReportInput {
@@ -38,6 +40,8 @@ export interface BuildReportInput {
   dryRun: boolean;
   // The most recent earlier snapshot, if any; without it every change and delta is "n/a".
   previous?: Snapshot | null;
+  // Manual overrides stored for this week, applied after the calculated values (FR-022).
+  overrides?: readonly OverrideRecord[];
 }
 
 export type SnapshotDraft = Omit<Snapshot, "jobId">;
@@ -213,7 +217,7 @@ export async function buildReport(
       issues: g.issues.map(toReportIssue),
     }));
 
-  const report: Report = {
+  const calculated: Report = {
     projectKey: input.projectKey,
     reportName: settings.reportName,
     timeZone: period.timeZone,
@@ -238,14 +242,17 @@ export async function buildReport(
     overrides: [],
     summary: null,
   };
+  const report = input.overrides?.length
+    ? applyOverrides(calculated, input.overrides, input.previous ?? null)
+    : calculated;
   const snapshot: SnapshotDraft = {
     weekStart: period.weekStart,
-    overallRag: overall.effective,
+    overallRag: report.overall.rag.effective,
     blockerCount: blockers.length,
     epics: metrics.epics.map((stats, i) => ({
       epicKey: stats.epicKey ?? NO_EPIC_KEY,
       name: stats.name,
-      rag: epicMetrics[i]!.rag.effective,
+      rag: report.epics[i]!.rag.effective,
       basis: stats.basis,
       totalUnits: stats.totalUnits,
       doneUnits: stats.doneUnits,
@@ -253,5 +260,6 @@ export async function buildReport(
       blockerCount: epicMetrics[i]!.blockerCount,
     })),
   };
-  return { report: reportSchema.parse(report), warnings, snapshot };
+  const parsed = reportSchema.parse(report);
+  return { report: parsed, warnings: parsed.warnings, snapshot };
 }

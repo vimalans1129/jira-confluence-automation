@@ -9,6 +9,7 @@ import { loginRouter, sessionRouter } from "./routes/auth.js";
 import { healthRouter, type DatabaseCheck } from "./routes/health.js";
 import { settingsRouter } from "./routes/settings.js";
 import { reportsRouter, type ReportRouteDeps } from "./routes/reports.js";
+import { snapshotsRouter, type TrendRouteDeps } from "./routes/snapshots.js";
 import { validateRouter, type ValidateRouteDeps } from "./routes/validate.js";
 import type { SettingsRepository } from "./repositories/settingsRepository.js";
 
@@ -19,6 +20,8 @@ export interface AppDependencies {
   settings?: SettingsRepository;
   validate?: ValidateRouteDeps;
   reports?: ReportRouteDeps;
+  // Trend data and manual RAG overrides.
+  trends?: TrendRouteDeps;
 }
 
 export function createApp(deps: AppDependencies): Express {
@@ -43,6 +46,7 @@ export function createApp(deps: AppDependencies): Express {
   if (deps.settings) api.use(settingsRouter(deps.settings));
   if (deps.validate) api.use(validateRouter(deps.validate));
   if (deps.reports) api.use(reportsRouter(deps.reports));
+  if (deps.trends) api.use(snapshotsRouter(deps.trends));
 
   app.use("/api/v1", api);
 

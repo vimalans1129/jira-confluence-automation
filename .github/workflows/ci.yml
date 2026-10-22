@@ -51,6 +51,47 @@ jobs:
           BENCH_LATENCY_MS: "50"
       - run: npm audit --audit-level=high
 
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [backend]
+    defaults:
+      run:
+        working-directory: work/weekly-status-report/frontend
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: wsr
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: wsr
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U wsr -d wsr"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      E2E_DATABASE_URL: postgres://wsr:ci-only-password@localhost:5432/wsr
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: work/weekly-status-report/.nvmrc
+          cache: npm
+          cache-dependency-path: |
+            work/weekly-status-report/frontend/package-lock.json
+            work/weekly-status-report/backend/package-lock.json
+      - run: npm ci
+      - run: npm ci
+        working-directory: work/weekly-status-report/backend
+      - run: npm run migrate
+        working-directory: work/weekly-status-report/backend
+        env:
+          DATABASE_URL: postgres://wsr:ci-only-password@localhost:5432/wsr
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+
   frontend:
     runs-on: ubuntu-latest
     defaults:

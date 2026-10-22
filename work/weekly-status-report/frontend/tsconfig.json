@@ -15,7 +15,7 @@
       "@contract": ["../backend/src/contract/index.ts"],
       "@contract/*": ["../backend/src/contract/*"]
     },
-    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"]
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom", "node"]
   },
-  "include": ["src", "tests", "*.ts"]
+  "include": ["src", "tests", "e2e", "*.ts"]
 }

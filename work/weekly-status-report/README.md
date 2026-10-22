@@ -51,7 +51,7 @@ Backend tests that need a database run only when `TEST_DATABASE_URL` is set.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` (repository root) runs for both packages: format check, lint, type check, tests, build and `npm audit --audit-level=high` (high or critical findings fail the build). The backend job runs against a PostgreSQL 15 service container, applies migrations, and sets `TEST_DATABASE_URL`.
+`.github/workflows/ci.yml` (repository root) runs for both packages: format check, lint, type check, tests, build and `npm audit --audit-level=high` (high or critical findings fail the build). The backend job runs against a PostgreSQL 15 service container, applies migrations, and sets `TEST_DATABASE_URL`. An `e2e` job runs the Playwright test against the mock Jira.
 
 ## Database
 
@@ -91,6 +91,35 @@ This builds the backend and frontend images, runs the migrations once (the `migr
 - Failed logins are limited to 5 per 15 minutes per client (429 `TOO_MANY_ATTEMPTS` with `Retry-After`).
 - Rotation: change `SESSION_SECRET` to invalidate every session; change `APP_ADMIN_PASSWORD_HASH` to rotate the password. Restart the backend afterwards.
 - Known limitation: sessions are stateless signed cookies, so logout clears the cookie but a copied cookie stays valid until it expires or the secret changes.
+
+## Reports (Phase 1)
+
+- **Jira layer**: `backend/src/jira` holds the client (retries, error mapping, ADF to text), enrichment (changelog, comments, sprint) and the incremental sync into `issue_history`. Connection settings come from `JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`, `JIRA_PROJECT_KEY` and `JIRA_BOARD_ID`.
+- **Validation gate**: `POST /api/v1/validate` checks the connection and field choices and records `validation_passed_at`. Report generation is refused until it passes (and again after the field settings change).
+- **Reports API** (all under `/api/v1`, session and CSRF required):
+  - `POST /reports` with `{ weekStart?, timeZone?, dryRun? }` returns 202 and a job. Jobs run one at a time, time out after 10 minutes, and a restart marks unfinished jobs `JOB_INTERRUPTED`.
+  - `GET /reports/latest`, `GET /reports/:id` (status, stage, warnings), `GET /reports/:id/data` (the report; 410 once past the 52-week retention).
+  - `GET /reports/:id/deck` downloads `Weekly_Status_<KEY>_<YYYY-MM-DD>.pptx`; `POST /reports/:id/deck` rebuilds it from stored data without calling Jira. Dry runs have no deck.
+- **Deck**: 16:9, slides in order title, executive summary, milestones, completed, planned, risks and appendix. Tables hold at most 10 rows per slide, the deck is capped at 25 slides (the rest is summarized and a `DECK_TRUNCATED` warning is added), and issue keys link to Jira. The trend slide arrives in Phase 2.
+- **UI**: sign in, then pick a week and time zone (or leave blank for last week), optionally tick dry run, and generate. Progress is polled; the Dashboard tab shows overall RAG with reasons and milestone progress, the Report tab shows completed, planned and risks.
+
+### Running against the mock Jira
+
+```text
+cd backend
+npm run mock-jira                      # mock Jira on http://localhost:4010 (MOCK_JIRA_ISSUES, MOCK_JIRA_LATENCY_MS, MOCK_JIRA_PORT)
+# in ../.env: JIRA_BASE_URL=http://localhost:4010, JIRA_EMAIL=dev@example.com, JIRA_API_TOKEN=x, JIRA_PROJECT_KEY=DEMO, JIRA_BOARD_ID=1
+npm run migrate
+npm run seed                           # records validation_passed_at; add -- --reset to clear jobs and the history cache
+npm run dev                            # backend on :3000
+cd ../frontend && npm run dev          # UI on :5173
+```
+
+The mock's data is dated around 2026-10-21, so pick a week such as 2026-10-14 in the UI. `npm run bench:sync` times a sync against the mock.
+
+### End-to-end test
+
+`cd frontend && npx playwright install chromium && npm run e2e` starts the mock Jira, the backend and Vite, seeds validation, and drives sign-in, generation, the report view and the deck download. It needs PostgreSQL with migrations applied; set `E2E_DATABASE_URL` if it is not `postgres://wsr:change-me@localhost:5432/wsr`. CI runs it in the `e2e` job.
 
 ## Technology choices
 

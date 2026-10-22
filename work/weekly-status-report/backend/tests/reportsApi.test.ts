@@ -1,4 +1,5 @@
 import argon2 from "argon2";
+import JSZip from "jszip";
 import pg from "pg";
 import request from "supertest";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -11,6 +12,7 @@ import { createLogger } from "../src/logger.js";
 import { createHistoryRepository } from "../src/repositories/historyRepository.js";
 import { createJobRepository } from "../src/repositories/jobRepository.js";
 import { createSettingsRepository } from "../src/repositories/settingsRepository.js";
+import { buildDeck } from "../src/services/deckBuilder.js";
 import { createReportService } from "../src/services/reportService.js";
 
 const url = process.env.TEST_DATABASE_URL;
@@ -227,6 +229,22 @@ describe.skipIf(!url)("report API", () => {
     expect((await post(dry.body.id)).status).toBe(409);
     expect((await post(999999)).status).toBe(404);
     expect((await agent.post(`/api/v1/reports/${dry.body.id}/deck`)).status).toBe(403);
+  });
+
+  it("keeps person names and mention markers out of a deck built from mock Jira data", async () => {
+    const created = await create();
+    await service.idle();
+    const data = (await agent.get(`/api/v1/reports/${created.body.id}/data`)).body;
+    expect(data.blockers.length).toBeGreaterThan(0);
+    const deck = await buildDeck(reportSchema.parse(data), { jiraBaseUrl: mock.url });
+    const zip = await JSZip.loadAsync(deck.content);
+    let xml = "";
+    for (const name of Object.keys(zip.files)) {
+      if (name.endsWith(".xml") || name.endsWith(".rels"))
+        xml += await zip.file(name)!.async("string");
+    }
+    expect(xml).not.toMatch(/accountid|displayName|emailAddress|\[~|jane\d*@/i);
+    expect(xml).not.toContain(TOKEN);
   });
 
   it("never exposes credentials, raw Jira payloads, or person names", async () => {

@@ -14,7 +14,17 @@ export default defineConfig({
     ],
   },
   server: {
-    proxy: { "/api": "http://localhost:3000" },
+    // Keep the browser's Host header so the backend's same-origin check accepts proxied requests.
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000",
+        configure: (proxy) => {
+          proxy.on("proxyReq", (proxyReq, req) => {
+            if (req.headers.host) proxyReq.setHeader("host", req.headers.host);
+          });
+        },
+      },
+    },
   },
   test: {
     environment: "jsdom",

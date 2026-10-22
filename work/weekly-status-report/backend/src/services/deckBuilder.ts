@@ -205,6 +205,7 @@ export function buildDeck(
       report.planned.reduce((n, g) => n + g.issues.length, 0),
       "item",
     )} planned next week`,
+    `${plural(report.overdue.length, "overdue item")}`,
     `${plural(report.blockers.length, "open blocker")}`,
     `Bugs: ${report.bugs.opened} opened, ${report.bugs.closed} closed, ${report.bugs.currentlyOpen} currently open`,
     ...report.overall.rag.reasons.slice(0, 3).map((r) => truncate(r, 110)),

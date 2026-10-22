@@ -63,6 +63,21 @@ export function ReportView({ report }: { report: Report }) {
         groups={report.planned}
         empty="Nothing is planned for next week."
       />
+      <section aria-labelledby="overdue-heading">
+        <h2 id="overdue-heading">Overdue items</h2>
+        {report.overdue.length === 0 ? (
+          <p>Nothing is overdue.</p>
+        ) : (
+          <ul>
+            {report.overdue.map((issue) => (
+              <li key={issue.key}>
+                <strong>{issue.key}</strong> {issue.summary} ({issue.status}, {issue.epicName}, due{" "}
+                {issue.dueDate})
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
       <section aria-labelledby="risks-heading">
         <h2 id="risks-heading">Key risks and issues</h2>
         {report.blockers.length === 0 ? (

@@ -132,6 +132,7 @@ export const reportSchema = z.object({
   epics: z.array(epicMetricsSchema),
   completed: z.array(issueGroupSchema),
   planned: z.array(issueGroupSchema),
+  overdue: z.array(issueSchema).default([]),
   blockers: z.array(blockerSchema),
   bugs: bugSummarySchema,
   warnings: z.array(warningSchema),

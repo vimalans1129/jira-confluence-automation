@@ -115,6 +115,19 @@ export const sampleReport: Report = {
       ],
     },
   ],
+  overdue: [
+    {
+      key: "DEMO-16",
+      summary: "Migrate reporting views",
+      type: "Task",
+      status: "In Progress",
+      statusCategory: "In Progress",
+      epicKey: "DEMO-1",
+      epicName: "Data migration",
+      points: 2,
+      dueDate: "2026-10-14",
+    },
+  ],
   blockers: [
     {
       key: "DEMO-15",

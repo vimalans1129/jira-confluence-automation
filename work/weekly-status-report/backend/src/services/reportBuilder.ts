@@ -236,6 +236,7 @@ export async function buildReport(
     epics: epicMetrics,
     completed: toGroups(metrics.completed),
     planned: toGroups(metrics.planned),
+    overdue: metrics.overdue.map(toReportIssue),
     blockers,
     bugs: metrics.bugs,
     warnings,

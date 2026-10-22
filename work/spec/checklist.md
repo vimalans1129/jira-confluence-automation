@@ -29,7 +29,7 @@ Rows are grouped by area and cite the FR, NFR, DEF or US IDs they cover. They ar
 | Job tracking | FR-043 | ✅ | ✅ | Live: queued, started and finished times plus stage; 202 then 409 `REPORT_IN_PROGRESS` on concurrent run; about 0.7 s for 400 issues. Test: startup marks queued and running jobs interrupted; 10-minute timeout. |
 | Dry run | FR dry-run | ✅ | ✅ | Live: no snapshot or deck created. |
 | Epic metrics, percent, units | FR-009 | 🟡 | ✅ | Data correct (live). Days-to-due and status-count breakdown are in the data but not shown in UI or deck (gap 5). |
-| Overdue work | FR-013 | ❌ | ❌ | Computed in `metrics.overdue` but not in the report contract, UI or deck. Only per-Epic `overduePercent` (gap 1). |
+| Overdue work | FR-013 | ✅ | ✅ | Fixed after the first run: `overdue` list in the report data, "Overdue items" section in the UI, overdue count in the deck summary. Test: API test checks the list on mock data. |
 | Completed and planned groups | FR-010..FR-012 | ✅ | ✅ | Live and Test: points included, sub-tasks and Epic issues excluded, reopened issues not counted, "No Epic" listed last. |
 | Blockers | FR-014, DEF blocker age | 🟡 | ✅ | Age, Epic and mitigation present. No run warning for blockers with no comment (gap 2). |
 | Bugs summary | FR-014 | 🟡 | ✅ | Opened, closed, open in data and in the deck summary bullet; not in the web UI (gap 5). |
@@ -50,18 +50,18 @@ Rows are grouped by area and cite the FR, NFR, DEF or US IDs they cover. They ar
 
 | # | Severity | Requirement | Finding | Suggested fix |
 |---|---|---|---|---|
-| 1 | High | FR-013 | Overdue work is not exposed in contract, UI or deck. | Add to report contract and show in dashboard and deck. |
-| 2 | Medium | US3.4 | Blockers with no comment show "No mitigation recorded" but raise no run warning (7 in the live run). | Add a `BLOCKER_NO_MITIGATION` warning. |
-| 3 | Medium | FR-054 | `trendWeeks` default 8, allowed 1–52 and the deck ignores it (uses constant 6). | Default 6, validate 4–12, pass the setting into the deck builder. |
-| 4 | Medium | FR-042 | A settings change does not mark the stored deck stale. | Mark the deck stale on report-affecting setting changes. |
-| 5 | Low | FR-009, FR-014 | Days-to-due, status counts and bugs summary not in UI; deck table lacks per-Epic RAG arrows. | Add to UI and deck. |
-| 6 | Low | RAG reasons | Wording differs from the spec example. | Optional wording change. |
-| 7 | Medium | FR-038 | No settings or validation page, so a first-time user hits `VALIDATION_REQUIRED` with no UI path (Phase 3 T3.1). | Pull T3.1 forward or document the API call. |
-| 8 | Low | FR-029 | Trend chart has empty alt text; the adjacent table is the text equivalent. | Add a description (T3.6). |
-| 9 | Low | Trend slide | Always present, spec says optional. | Omit when fewer than 2 weeks. |
-| 10 | Low | T3.5 | Appendix RAG rules text is generic, warnings and overrides capped at 9 lines. | Part of T3.5. |
-| 11 | Low | Frontend | `GeneratePanel` keys warnings by code, duplicates cause React key warnings. | Use code plus index. |
-| 12 | Low | Security | Logout does not revoke the token server-side. | Accept for the shared-password model or add a revocation list. |
+| 1 | High | FR-013 | **Fixed.** Overdue items are now in the report contract (`overdue`), an "Overdue items" section in the UI and an overdue count in the deck summary. | Done. |
+| 2 | Nice to have | US3.4 | Blockers with no comment show "No mitigation recorded" but raise no run warning (7 in the live run). | Add a `BLOCKER_NO_MITIGATION` warning. |
+| 3 | Nice to have | FR-054 | `trendWeeks` default 8, allowed 1–52 and the deck ignores it (uses constant 6). | Default 6, validate 4–12, pass the setting into the deck builder. |
+| 4 | Nice to have | FR-042 | A settings change does not mark the stored deck stale. | Mark the deck stale on report-affecting setting changes. |
+| 5 | Nice to have | FR-009, FR-014 | Days-to-due, status counts and bugs summary not in UI; deck table lacks per-Epic RAG arrows. | Add to UI and deck. |
+| 6 | Nice to have | RAG reasons | Wording differs from the spec example. | Optional wording change. |
+| 7 | Nice to have | FR-038 | No settings or validation page, so a first-time user hits `VALIDATION_REQUIRED` with no UI path (Phase 3 T3.1). | Pull T3.1 forward or document the API call. |
+| 8 | Nice to have | FR-029 | Trend chart has empty alt text; the adjacent table is the text equivalent. | Add a description (T3.6). |
+| 9 | Nice to have | Trend slide | Always present, spec says optional. | Omit when fewer than 2 weeks. |
+| 10 | Nice to have | T3.5 | Appendix RAG rules text is generic, warnings and overrides capped at 9 lines. | Part of T3.5. |
+| 11 | Nice to have | Frontend | `GeneratePanel` keys warnings by code, duplicates cause React key warnings. | Use code plus index. |
+| 12 | Nice to have | Security | Logout does not revoke the token server-side. | Accept for the shared-password model or add a revocation list. |
 
 ## 3. Unverified or assumed
 

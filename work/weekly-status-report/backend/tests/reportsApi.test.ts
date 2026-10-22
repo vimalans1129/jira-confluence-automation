@@ -243,6 +243,8 @@ describe.skipIf(!url)("report API", () => {
     await service.idle();
     const data = (await agent.get(`/api/v1/reports/${created.body.id}/data`)).body;
     expect(data.blockers.length).toBeGreaterThan(0);
+    expect(Array.isArray(data.overdue)).toBe(true);
+    expect(data.overdue.length).toBeGreaterThan(0);
     const deck = await buildDeck(reportSchema.parse(data), { jiraBaseUrl: mock.url });
     const zip = await JSZip.loadAsync(deck.content);
     let xml = "";

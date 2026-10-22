@@ -1,5 +1,6 @@
 import type { Report } from "@contract";
-import { RagBadge } from "../components/RagBadge";
+import { RagStatus } from "../components/RagStatus";
+import { TrendSection } from "../components/TrendSection";
 
 const pct = (n: number): string => `${Number.isInteger(n) ? n : n.toFixed(1)}%`;
 
@@ -10,7 +11,7 @@ export function DashboardView({ report }: { report: Report }) {
       <section aria-labelledby="overall-heading">
         <h2 id="overall-heading">Overall status</h2>
         <p>
-          <RagBadge rag={overall.rag.effective} /> Change vs last week: {overall.ragChange}
+          <RagStatus rag={overall.rag} /> Change vs last week: {overall.ragChange}
         </p>
         <p>
           Week {report.weekStart} to {report.weekEnd} ({report.timeZone})
@@ -50,7 +51,7 @@ export function DashboardView({ report }: { report: Report }) {
                 <tr key={epic.epicKey ?? epic.name}>
                   <th scope="row">{epic.name}</th>
                   <td>
-                    <RagBadge rag={epic.rag.effective} />
+                    <RagStatus rag={epic.rag} />
                   </td>
                   <td>
                     <progress
@@ -74,6 +75,8 @@ export function DashboardView({ report }: { report: Report }) {
           </table>
         )}
       </section>
+
+      <TrendSection report={report} />
     </>
   );
 }

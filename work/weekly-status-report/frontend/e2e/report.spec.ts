@@ -21,7 +21,9 @@ test("sign in, generate against the mock Jira, see the report and download the d
   await expect(page.getByText(/is ready/)).toBeVisible({ timeout: 60_000 });
   const overall = page.getByRole("region", { name: "Overall status" });
   await expect(overall).toContainText(/Red|Amber|Green/);
-  await expect(page.getByRole("table")).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Milestone progress" }).getByRole("table"),
+  ).toBeVisible();
 
   await page.getByRole("button", { name: "Report" }).click();
   await expect(page.getByRole("heading", { name: "Key risks and issues" })).toBeVisible();

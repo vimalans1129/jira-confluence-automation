@@ -18,7 +18,14 @@ if (!connection) {
 const pool = createPool(env.DATABASE_URL, createLogger("silent"));
 try {
   if (process.argv.includes("--reset")) {
-    for (const table of ["snapshot", "report_deck", "report_job", "issue_history", "sync_state"]) {
+    for (const table of [
+      "rag_override",
+      "snapshot",
+      "report_deck",
+      "report_job",
+      "issue_history",
+      "sync_state",
+    ]) {
       await pool.query(`DELETE FROM ${table}`);
     }
   }

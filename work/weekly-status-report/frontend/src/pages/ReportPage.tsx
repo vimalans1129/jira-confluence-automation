@@ -1,4 +1,5 @@
 import type { IssueGroup, Report } from "@contract";
+import { RagBadge } from "../components/RagBadge";
 
 function Groups({ title, groups, empty }: { title: string; groups: IssueGroup[]; empty: string }) {
   const id = title.toLowerCase().replace(/\W+/g, "-");
@@ -31,6 +32,27 @@ function Groups({ title, groups, empty }: { title: string; groups: IssueGroup[];
 export function ReportView({ report }: { report: Report }) {
   return (
     <>
+      <section aria-labelledby="overrides-heading">
+        <h2 id="overrides-heading">Status overrides</h2>
+        {report.overrides.length === 0 ? (
+          <p>No manual overrides apply to this week.</p>
+        ) : (
+          <ul>
+            {report.overrides.map((o) => {
+              const calculated =
+                o.scope === "overall"
+                  ? report.overall.rag.calculated
+                  : report.epics.find((e) => e.epicKey === o.epicKey)?.rag.calculated;
+              return (
+                <li key={`${o.scope}-${o.epicKey ?? ""}`}>
+                  {o.scope === "overall" ? "Overall" : o.epicKey}: <RagBadge rag={o.rag} />{" "}
+                  (calculated {calculated ?? "unknown"}). {o.reason}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
       <Groups
         title="Completed this week"
         groups={report.completed}

@@ -182,6 +182,22 @@ describe.skipIf(!url)("snapshots", () => {
     }
   });
 
+  it("turns two simultaneous generations for one week into one job and one snapshot", async () => {
+    await mock?.close();
+    mock = await startMockJira({ dataset, latencyMs: 40 });
+    const service = svc();
+    const results = await Promise.allSettled([
+      service.start({ weekStart: "2026-10-12" }),
+      service.start({ weekStart: "2026-10-12" }),
+    ]);
+    await service.idle();
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    const rejected = results.find((r) => r.status === "rejected") as PromiseRejectedResult;
+    expect(rejected.reason).toMatchObject({ status: 409, code: "REPORT_IN_PROGRESS" });
+    expect((await pool!.query("SELECT 1 FROM report_job")).rowCount).toBe(1);
+    expect((await pool!.query("SELECT 1 FROM snapshot")).rowCount).toBe(1);
+  });
+
   it("does not store a snapshot for a dry run", async () => {
     await generate({ weekStart: "2026-10-12", dryRun: true });
     expect((await pool!.query("SELECT 1 FROM snapshot")).rowCount).toBe(0);

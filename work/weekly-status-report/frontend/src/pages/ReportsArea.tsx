@@ -3,8 +3,9 @@ import { GeneratePanel } from "../components/GeneratePanel";
 import { useLatestReport } from "../hooks/useLatestReport";
 import { DashboardView } from "./DashboardPage";
 import { ReportView } from "./ReportPage";
+import { OverridesPage } from "./OverridesPage";
 
-type Tab = "dashboard" | "report";
+type Tab = "dashboard" | "report" | "overrides";
 
 export function ReportsArea() {
   const { state, submitError, generate, refresh, setJob } = useLatestReport();
@@ -46,9 +47,19 @@ export function ReportsArea() {
             </button>{" "}
             <button type="button" aria-pressed={tab === "report"} onClick={() => setTab("report")}>
               Report
+            </button>{" "}
+            <button
+              type="button"
+              aria-pressed={tab === "overrides"}
+              onClick={() => setTab("overrides")}
+              disabled={job?.dryRun === true}
+            >
+              Overrides
             </button>
           </div>
-          {tab === "dashboard" ? <DashboardView report={report} /> : <ReportView report={report} />}
+          {tab === "dashboard" && <DashboardView report={report} />}
+          {tab === "report" && <ReportView report={report} />}
+          {tab === "overrides" && <OverridesPage report={report} onChanged={refresh} />}
         </>
       )}
     </>

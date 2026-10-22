@@ -51,6 +51,7 @@ const ready =
   (method, url) => {
     if (url.endsWith("/reports/latest")) return { status: 200, body: { job: j } };
     if (url.endsWith(`/reports/${j.id}/data`)) return { status: 200, body: sampleReport };
+    if (url.includes("/snapshots")) return { status: 200, body: { weeks: [] } };
     return undefined;
   };
 

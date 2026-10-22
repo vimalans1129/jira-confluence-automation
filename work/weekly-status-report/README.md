@@ -121,6 +121,14 @@ The mock's data is dated around 2026-10-21, so pick a week such as 2026-10-14 in
 
 `cd frontend && npx playwright install chromium && npm run e2e` starts the mock Jira, the backend and Vite, seeds validation, and drives sign-in, generation, the report view and the deck download. It needs PostgreSQL with migrations applied; set `E2E_DATABASE_URL` if it is not `postgres://wsr:change-me@localhost:5432/wsr`. CI runs it in the `e2e` job.
 
+## Trends and overrides (Phase 2)
+
+- Each non-dry run stores one snapshot per week (`snapshot`, `snapshot_epic`); rerunning a week replaces it. Deltas and arrows compare with the most recent earlier snapshot, even across skipped weeks, and show `n/a` when there is none.
+- `GET /api/v1/snapshots?weeks=6&to=YYYY-MM-DD` returns 4 to 12 weeks (default 6). The dashboard shows them as a chart with a text alternative and a data table, and slide 7 of the deck shows the same weeks. Overall percent complete is the mean of the real Epics' percent complete.
+- `GET|POST|DELETE /api/v1/overrides` manage a manual RAG for the overall status or one Epic, for one week, with a mandatory reason. A change recomputes the stored report and snapshot from stored data (no Jira calls), marks the deck stale and writes an `audit_entry`. An override for an Epic that is not in the report is ignored with an `OVERRIDE_EPIC_MISSING` warning.
+- The Overrides tab offers last week's overrides for confirmation. The dashboard, report page and deck show the overridden status, its reason and the calculated RAG (the deck marks overridden Epics with `*` and lists them in the appendix).
+- The end-to-end test also covers a two-week trend and an override.
+
 ## Technology choices
 
 Confirmed in task T0.1 with a throwaway spike (Node.js 24, Windows). Exact versions are pinned by the lockfiles added in T0.3.

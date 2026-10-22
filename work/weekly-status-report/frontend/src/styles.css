@@ -61,3 +61,38 @@ input[type="checkbox"] + label {
   outline: 3px solid #1d4ed8;
   outline-offset: 2px;
 }
+
+.override-note {
+  font-style: italic;
+}
+.trend-chart {
+  width: 100%;
+  max-width: 40rem;
+  height: auto;
+}
+.trend-chart .axis {
+  stroke: #9ca3af;
+  stroke-width: 1;
+}
+.trend-chart .trend-line {
+  stroke: #374151;
+  stroke-width: 2;
+}
+.trend-chart .dot {
+  stroke: #1f2937;
+  stroke-width: 2;
+}
+.trend-chart .dot-green {
+  fill: #2e7d32;
+}
+.trend-chart .dot-amber {
+  fill: #ffc107;
+}
+.trend-chart .dot-red {
+  fill: #c62828;
+}
+textarea {
+  width: 100%;
+  max-width: 40rem;
+  font: inherit;
+}

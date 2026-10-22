@@ -1,4 +1,4 @@
-import { loadEnv, toJiraConnection } from "./config/env.js";
+﻿import { loadEnv, toJiraConnection } from "./config/env.js";
 import { createLogger } from "./logger.js";
 import { createPool } from "./repositories/pool.js";
 import { createSettingsRepository } from "./repositories/settingsRepository.js";
@@ -18,7 +18,7 @@ if (!connection) {
 const pool = createPool(env.DATABASE_URL, createLogger("silent"));
 try {
   if (process.argv.includes("--reset")) {
-    for (const table of ["report_deck", "report_job", "issue_history", "sync_state"]) {
+    for (const table of ["snapshot", "report_deck", "report_job", "issue_history", "sync_state"]) {
       await pool.query(`DELETE FROM ${table}`);
     }
   }

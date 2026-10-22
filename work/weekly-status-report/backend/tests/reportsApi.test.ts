@@ -1,4 +1,4 @@
-import argon2 from "argon2";
+﻿import argon2 from "argon2";
 import JSZip from "jszip";
 import pg from "pg";
 import request from "supertest";
@@ -84,7 +84,14 @@ describe.skipIf(!url)("report API", () => {
     await mock.close();
   });
   beforeEach(async () => {
-    for (const table of ["report_deck", "report_job", "issue_history", "sync_state", "setting"]) {
+    for (const table of [
+      "snapshot",
+      "report_deck",
+      "report_job",
+      "issue_history",
+      "sync_state",
+      "setting",
+    ]) {
       await pool!.query(`DELETE FROM ${table}`);
     }
     await settings.recordValidation({

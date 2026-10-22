@@ -1,4 +1,4 @@
-import pg from "pg";
+﻿import pg from "pg";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { JiraConnection } from "../src/config/env.js";
 import { reportSchema } from "../src/contract/index.js";
@@ -60,7 +60,14 @@ describe.skipIf(!url)("report job runner", () => {
   });
   beforeEach(async () => {
     logs = [];
-    for (const table of ["report_deck", "report_job", "issue_history", "sync_state", "setting"]) {
+    for (const table of [
+      "snapshot",
+      "report_deck",
+      "report_job",
+      "issue_history",
+      "sync_state",
+      "setting",
+    ]) {
       await pool!.query(`DELETE FROM ${table}`);
     }
     await pool!.query("DELETE FROM audit_entry WHERE entity = 'setting'");

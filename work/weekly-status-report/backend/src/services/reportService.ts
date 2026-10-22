@@ -10,6 +10,7 @@ import { syncProject, type HistoryStore } from "../jira/sync.js";
 import type { Logger } from "../logger.js";
 import type { JobRecord, JobRepository } from "../repositories/jobRepository.js";
 import type { SettingsRepository } from "../repositories/settingsRepository.js";
+import type { SnapshotRepository } from "../repositories/snapshotRepository.js";
 import { buildReport } from "./reportBuilder.js";
 import { assertValidated } from "./validation.js";
 
@@ -37,6 +38,7 @@ export interface ReportServiceDeps {
   jobs: JobRepository;
   settings: SettingsRepository;
   history: HistoryStore;
+  snapshots?: SnapshotRepository;
   connection: JiraConnection | null;
   logger: Logger;
   createClient?: (connection: JiraConnection, settings: Settings) => JiraClient;
@@ -100,7 +102,7 @@ export function createReportService(deps: ReportServiceDeps): ReportService {
     const sprint = sprintApplicable ? await fetchActiveSprint(client, connection.boardId) : null;
 
     await jobs.setStage(job.id, "computing report");
-    const { report, warnings } = await buildReport({
+    const { report, warnings, snapshot } = await buildReport({
       projectKey: connection.projectKey,
       settings,
       period,
@@ -111,6 +113,7 @@ export function createReportService(deps: ReportServiceDeps): ReportService {
       sprintApplicable,
       fetchComment: (key) => fetchLatestComment(client, key),
       dryRun: job.dryRun,
+      previous: (await deps.snapshots?.findPrevious(period.weekStart)) ?? null,
     });
 
     if (!job.dryRun && deps.buildDeck) {
@@ -120,6 +123,7 @@ export function createReportService(deps: ReportServiceDeps): ReportService {
     }
 
     if (!(await jobs.succeed(job.id, report, warnings))) return;
+    if (!job.dryRun) await deps.snapshots?.replace({ ...snapshot, jobId: job.id });
     for (const w of warnings) {
       logger.warn({ jobId: job.id, warningCode: w.code }, w.message);
     }

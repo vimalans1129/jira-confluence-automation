@@ -5,6 +5,7 @@ import { createHistoryRepository } from "./repositories/historyRepository.js";
 import { createJobRepository } from "./repositories/jobRepository.js";
 import { createPool, databaseCheck } from "./repositories/pool.js";
 import { createSettingsRepository } from "./repositories/settingsRepository.js";
+import { createSnapshotRepository } from "./repositories/snapshotRepository.js";
 import { createReportService } from "./services/reportService.js";
 import { buildDeck } from "./services/deckBuilder.js";
 import type { Report } from "./contract/index.js";
@@ -24,6 +25,7 @@ const service = createReportService({
   jobs,
   settings,
   history: createHistoryRepository(pool),
+  snapshots: createSnapshotRepository(pool),
   connection,
   logger,
   buildDeck: deckForReport,

@@ -22,6 +22,7 @@ import {
 import { sanitizeMitigation, sanitizeText } from "../domain/sanitizer.js";
 import type { JiraIssue } from "../jira/client.js";
 import type { ActiveSprint, DerivedHistory } from "../jira/enrich.js";
+import { NO_EPIC_KEY, type Snapshot } from "../repositories/snapshotRepository.js";
 
 export interface BuildReportInput {
   projectKey: string;
@@ -35,7 +36,11 @@ export interface BuildReportInput {
   sprintApplicable: boolean;
   fetchComment: (key: string) => Promise<string | null>;
   dryRun: boolean;
+  // The most recent earlier snapshot, if any; without it every change and delta is "n/a".
+  previous?: Snapshot | null;
 }
+
+export type SnapshotDraft = Omit<Snapshot, "jobId">;
 
 const EMPTY_HISTORY: DerivedHistory = { transitions: [], flagEvents: [], pointChanges: [] };
 
@@ -66,8 +71,9 @@ function toDomainIssue(
 
 export async function buildReport(
   input: BuildReportInput,
-): Promise<{ report: Report; warnings: ReportWarning[] }> {
+): Promise<{ report: Report; warnings: ReportWarning[]; snapshot: SnapshotDraft }> {
   const { settings, period } = input;
+  const previousEpics = new Map((input.previous?.epics ?? []).map((e) => [e.epicKey, e]));
   const denylist = settings.nameDenylist;
   const clean = (text: string) => sanitizeText(text, { denylist });
 
@@ -152,6 +158,7 @@ export async function buildReport(
       thresholds: settings.ragThresholds,
     });
     const rag = applyOverride(evaluation.rag, undefined);
+    const before = previousEpics.get(stats.epicKey ?? NO_EPIC_KEY);
     return {
       epicKey: stats.epicKey,
       name: stats.name,
@@ -162,7 +169,7 @@ export async function buildReport(
       percentComplete: roundPercent(stats.percentComplete),
       statusCounts: stats.statusCounts,
       daysToDue: stats.daysToDue,
-      percentDelta: percentDelta(stats.percentComplete, null),
+      percentDelta: percentDelta(stats.percentComplete, before?.percentComplete),
       overduePercent: stats.overduePercent === null ? null : roundPercent(stats.overduePercent),
       plannedCompletionPercent: planned === null ? null : roundPercent(planned),
       noDueDate: stats.noDueDate,
@@ -170,7 +177,7 @@ export async function buildReport(
       complete: stats.complete,
       blockerCount: own.length,
       rag,
-      ragChange: ragChange(rag.effective, null),
+      ragChange: ragChange(rag.effective, before?.rag),
     };
   });
 
@@ -216,7 +223,12 @@ export async function buildReport(
     generatedAt: formatInstant(input.now, period.timeZone),
     dryRun: input.dryRun,
     deckStale: false,
-    overall: { rag: overall, ragChange: NOT_AVAILABLE },
+    overall: {
+      rag: overall,
+      ragChange: input.previous
+        ? ragChange(overall.effective, input.previous.overallRag)
+        : NOT_AVAILABLE,
+    },
     epics: epicMetrics,
     completed: toGroups(metrics.completed),
     planned: toGroups(metrics.planned),
@@ -226,5 +238,20 @@ export async function buildReport(
     overrides: [],
     summary: null,
   };
-  return { report: reportSchema.parse(report), warnings };
+  const snapshot: SnapshotDraft = {
+    weekStart: period.weekStart,
+    overallRag: overall.effective,
+    blockerCount: blockers.length,
+    epics: metrics.epics.map((stats, i) => ({
+      epicKey: stats.epicKey ?? NO_EPIC_KEY,
+      name: stats.name,
+      rag: epicMetrics[i]!.rag.effective,
+      basis: stats.basis,
+      totalUnits: stats.totalUnits,
+      doneUnits: stats.doneUnits,
+      percentComplete: stats.percentComplete,
+      blockerCount: epicMetrics[i]!.blockerCount,
+    })),
+  };
+  return { report: reportSchema.parse(report), warnings, snapshot };
 }
